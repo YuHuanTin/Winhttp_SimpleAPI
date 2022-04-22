@@ -5,6 +5,8 @@
 #ifndef WINHTTP_SIMPLEAPI_WINHTTPAPI_H
 #define WINHTTP_SIMPLEAPI_WINHTTPAPI_H
 
-void c_start();
+char* Winhttp_Get();
+char* Winhttp_Post();
+
 
 #endif //WINHTTP_SIMPLEAPI_WINHTTPAPI_H
