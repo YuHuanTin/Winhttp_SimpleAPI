@@ -1,0 +1,10 @@
+//
+// Created by 23945 on 2022/4/22.
+//
+
+#ifndef WINHTTP_SIMPLEAPI_WINHTTPAPI_H
+#define WINHTTP_SIMPLEAPI_WINHTTPAPI_H
+
+void c_start();
+
+#endif //WINHTTP_SIMPLEAPI_WINHTTPAPI_H
