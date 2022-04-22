@@ -5,8 +5,15 @@
 #ifndef WINHTTP_SIMPLEAPI_WINHTTPAPI_H
 #define WINHTTP_SIMPLEAPI_WINHTTPAPI_H
 
-char *Winhttp_Get();
-char *Winhttp_Post();
+#include <iostream>
+#include <vector>
+#include "Windows.h"
+#include "winhttp.h"
+using namespace std;
+#pragma comment(lib,"winhttp.lib")
+
+extern "C" __declspec(dllexport) char *Winhttp_Get(char *szUrl,vector<char *>szHandles,char *szCookies,char *szProxy,unsigned uTimeout);
+extern "C" __declspec(dllexport) char *Winhttp_Post();
 
 
 #endif //WINHTTP_SIMPLEAPI_WINHTTPAPI_H
