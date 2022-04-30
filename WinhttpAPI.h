@@ -14,7 +14,4 @@ using namespace std;
 
 extern "C" __declspec(dllexport) char *Winhttp_Request(char *szUrl,char *szModel,vector<char *>szHandles,char *szCookies,char *szProxy,unsigned uTimeout);
 
-
-
-
 #endif //WINHTTP_SIMPLEAPI_WINHTTPAPI_H
