@@ -18,12 +18,23 @@ wchar_t *fn_mbstowcs(char *cpStr){
     mbstowcs_s(nullptr,retStr,len,cpStr,_TRUNCATE);
     return retStr;
 }
-char *fn_wcstombs(wchar_t *wcpStr){//may have some problem
+char *fn_wcstombs(wchar_t *wcpStr){
     size_t len=0;
+    len=WideCharToMultiByte(CP_ACP,NULL,wcpStr, -1, nullptr, 0,NULL,NULL);
+    char *retStr=new char[len];
+    WideCharToMultiByte(CP_ACP,NULL,wcpStr,-1,retStr,len,NULL,NULL);
+    /* //不知道为什么这个转换会失败????
     wcstombs_s(&len, nullptr,NULL,wcpStr,_TRUNCATE);
     char *retStr=new char[len];
     wcstombs_s(nullptr,retStr,len,wcpStr,_TRUNCATE);
+    */
     return retStr;
+}
+char *fn_encoding(char *cpData){//to CN
+    DWORD dwLen=MultiByteToWideChar(CP_ACP, NULL, cpData, -1, NULL, 0);
+    wchar_t *wcpData=new wchar_t [dwLen];
+    MultiByteToWideChar(CP_UTF8, 0, cpData, -1, wcpData, dwLen);
+    return fn_wcstombs(wcpData);
 }
 bool initWinhttp(){
 
@@ -106,28 +117,23 @@ char *Winhttp_Request(char *szUrl,char *szModel,vector<char *>szHandles,char *sz
     if (!WinHttpQueryDataAvailable(hRequest,&dwNumberOfBytesToRead)){
         printf("WinHttpQueryDataAvailable Error,LastError%lx",GetLastError());
     }
-    char *cpRecvData= new char[dwNumberOfBytesToRead+1];
-    memset(cpRecvData,0,dwNumberOfBytesToRead+1);
+
+    string szRecvData;
     while (dwNumberOfBytesToRead > 0){
         DWORD dwRecv= 0;
         char *cpBuffer=new char[dwNumberOfBytesToRead+1];
         memset(cpBuffer, 0, dwNumberOfBytesToRead+1);
-
         if (!WinHttpReadData(hRequest, cpBuffer, dwNumberOfBytesToRead, &dwRecv)){
             printf("WinHttpReadData Error,LastError%lx",GetLastError());
         }
         if (!WinHttpQueryDataAvailable(hRequest,&dwNumberOfBytesToRead)){
             printf("WinHttpQueryDataAvailable Error,LastError%lx",GetLastError());
         }
-        //返回原文长度
-        DWORD dwRawData=MultiByteToWideChar(CP_ACP, NULL, cpBuffer, -1, nullptr, 0);
-        wchar_t *wcpConvertData=new wchar_t [dwRawData];
-        MultiByteToWideChar(CP_UTF8, 0, cpBuffer, -1, wcpConvertData, dwRawData);
-        cpBuffer= fn_wcstombs(wcpConvertData);
-        strcat_s(cpRecvData,dwRawData,cpBuffer);
-        delete[] cpBuffer;
-        delete[] wcpConvertData;
+        szRecvData+=cpBuffer;
+        delete []cpBuffer;
     }
+    char *cpRecvData=fn_encoding(szRecvData.data());
+
 
     //clean all var at last
     WinHttpCloseHandle(hRequest);
