@@ -1,2 +1,2 @@
 # 简单的Winhttp接口
-使用Winhttp_Get()类似的函数来进行调用
+使用Winhttp_Request连接和发送不同类型的请求
