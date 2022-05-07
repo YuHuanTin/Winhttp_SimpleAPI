@@ -1,4 +1,3 @@
-#include <locale>
 #include "WinhttpAPI.h"
 
 struct stWinhttpSetting{
