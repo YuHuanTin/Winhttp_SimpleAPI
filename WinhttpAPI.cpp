@@ -1,3 +1,4 @@
+#include <locale>
 #include "WinhttpAPI.h"
 
 struct stWinhttpSetting{
@@ -18,23 +19,27 @@ wchar_t *fn_mbstowcs(char *cpStr){
     mbstowcs_s(nullptr,retStr,len,cpStr,_TRUNCATE);
     return retStr;
 }
-char *fn_wcstombs(wchar_t *wcpStr){
-    size_t len=0;
-    len=WideCharToMultiByte(CP_ACP,NULL,wcpStr, -1, nullptr, 0,NULL,NULL);
+char *fn_wcstombs(wchar_t *wcpStr)  {
+    size_t len=NULL;
+    len=WideCharToMultiByte(CP_ACP,NULL,wcpStr, -1, nullptr, 0,nullptr,nullptr);
     char *retStr=new char[len];
-    WideCharToMultiByte(CP_ACP,NULL,wcpStr,-1,retStr,len,NULL,NULL);
-    /* //不知道为什么这个转换会失败????
-    wcstombs_s(&len, nullptr,NULL,wcpStr,_TRUNCATE);
-    char *retStr=new char[len];
-    wcstombs_s(nullptr,retStr,len,wcpStr,_TRUNCATE);
-    */
+    WideCharToMultiByte(CP_ACP,NULL,wcpStr,-1,retStr,(int)len,nullptr,nullptr);
     return retStr;
 }
 char *fn_encoding(char *cpData){//to CN
-    DWORD dwLen=MultiByteToWideChar(CP_ACP, NULL, cpData, -1, NULL, 0);
+    DWORD dwLen=MultiByteToWideChar(CP_ACP, NULL, cpData, -1, nullptr, 0);
     wchar_t *wcpData=new wchar_t [dwLen];
-    MultiByteToWideChar(CP_UTF8, 0, cpData, -1, wcpData, dwLen);
+    MultiByteToWideChar(CP_UTF8, 0, cpData, -1, wcpData, (int)dwLen);
     return fn_wcstombs(wcpData);
+}
+void fn_char_up(char * &cprData){
+    char *tmpConvert=new char[strlen(cprData) + 1];
+    memset(tmpConvert, 0, strlen(cprData) + 1);
+    memcpy(tmpConvert, cprData, strlen(cprData));
+    for (size_t i = 0; i < strlen(tmpConvert); ++i) {
+        tmpConvert[i]=toupper(tmpConvert[i]);
+    }
+    cprData=tmpConvert;
 }
 bool initWinhttp(){
 
@@ -47,8 +52,8 @@ stUrl fn_initURL(char *szUrl){
     size_t  uPosFirst=strUrl.find("//",0),
             uPosNext=strUrl.find('/',uPosFirst+2),
             uPosPort=strUrl.find(':', uPosFirst + 2),
-            uAllocHostLen=0,
-            uAllocPathLen=0;
+            uAllocHostLen=NULL,
+            uAllocPathLen=NULL;
 
     if (uPosPort != string::npos){
         Url.uPort= strtoul(strUrl.substr(uPosPort+1,uPosNext).data(), nullptr,0);
@@ -64,33 +69,34 @@ stUrl fn_initURL(char *szUrl){
     }
     char *mHost=new char[uAllocHostLen];
     memset(mHost,0,uAllocHostLen+1);
-    memcpy_s(mHost,uAllocHostLen,&strUrl[uPosFirst+2],uAllocHostLen);
+    memcpy(mHost,&strUrl[uPosFirst+2],uAllocHostLen);
     char *mPath=new char[uAllocPathLen];
     memset(mPath, 0, uAllocPathLen+1);
-    memcpy_s(mPath, uAllocPathLen, &strUrl[uPosNext+1], uAllocPathLen);
-
+    memcpy(mPath, &strUrl[uPosNext+1], uAllocPathLen);
     Url.szHost=mHost;
     Url.szUrlPath=mPath;
     return Url;
 }
 
-
 char *Winhttp_Request(char *szUrl,char *szModel,vector<char *>szHandles,char *szCookies,char *szProxy,unsigned uTimeout){
     //prepare
-
-    //_strupr_s(szModel, strlen(szModel));//到大写
+    fn_char_up(szModel);//转大写
     DWORD dwNumberOfBytesToRead=0;
-
-
-    //UA part
-    char *pszUA;
-    pszUA="Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.198 Safari/537.36";
-    wchar_t *pwszUA=fn_mbstowcs(pszUA);
-
-    //URL part
+    //url处理
     stUrl Url=fn_initURL(szUrl);
-
-
+    //协议头处理
+    string szSumHandles;
+    char *pszUA;
+    pszUA="LogStatistic";
+    for (auto ch:szHandles) {
+        string tmpStr;
+        tmpStr=ch;
+        if (tmpStr.find("User-Agent")!=string::npos){
+            pszUA=ch;
+        }
+        szSumHandles+=tmpStr+"\r\n";
+    }
+    wchar_t *pwszUA=fn_mbstowcs(pszUA);
     //Handle Part
     HINTERNET   hSession,
                 hConnect,
