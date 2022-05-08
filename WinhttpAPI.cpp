@@ -54,6 +54,7 @@ char *Winhttp_Request(char *szUrl,char *szModel,char *szBody,vector<char *>szHan
     fn_char_up(szModel);//转大写
     URL_COMPONENTS url;
     DWORD dwNumberOfBytesToRead=0;
+
     //url处理
     fn_initURL(szUrl, url);
     //协议头处理
@@ -75,7 +76,7 @@ char *Winhttp_Request(char *szUrl,char *szModel,char *szBody,vector<char *>szHan
                 hConnect,
                 hRequest;
 
-    hSession=WinHttpOpen(pwszUA, WINHTTP_ACCESS_TYPE_AUTOMATIC_PROXY, nullptr, nullptr, 0);
+    hSession=WinHttpOpen(pwszUA, szProxy== nullptr?WINHTTP_ACCESS_TYPE_AUTOMATIC_PROXY:WINHTTP_ACCESS_TYPE_NAMED_PROXY, szProxy==nullptr?nullptr:fn_mbstowcs(szProxy), nullptr, 0);
     if (hSession == nullptr){
         printf("WinHttpOpen Error,LastError %lx\r\n",GetLastError());
     }
