@@ -79,7 +79,7 @@ char *Winhttp_Request(char *szUrl,char *szModel,char *szBody,vector<char *>szHan
     if (hSession == nullptr){
         printf("WinHttpOpen Error,LastError %lx\r\n",GetLastError());
     }
-    hConnect=WinHttpConnect(hSession, url.lpszHostName,url.nPort,NULL);
+    hConnect=WinHttpConnect(hSession, url.lpszHostName,(url.nPort==443||url.nPort==80)?INTERNET_DEFAULT_PORT:url.nPort,NULL);
     if (hConnect == nullptr){
         printf("WinHttpConnect Error,LastError %lx\r\n",GetLastError());
     }
