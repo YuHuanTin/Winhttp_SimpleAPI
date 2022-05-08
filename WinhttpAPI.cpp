@@ -1,9 +1,5 @@
 #include "WinhttpAPI.h"
 
-struct stWinhttpSetting{
-
-}_WinhttpSettings;
-
 //函数部分
 wchar_t *fn_mbstowcs(char *cpStr){
     size_t len=0;
@@ -34,11 +30,6 @@ void fn_char_up(char * &cprData){
     }
     cprData=tmpConvert;
 }
-bool initWinhttp(){
-
-    return true;
-}
-//  分割URL结构
 void fn_initURL(char *szUrl,URL_COMPONENTS &url){
     memset(&url,0, sizeof(url));
     url.dwStructSize = sizeof(url);
@@ -48,10 +39,14 @@ void fn_initURL(char *szUrl,URL_COMPONENTS &url){
     url.dwUrlPathLength   = (DWORD)-1;
     url.dwExtraInfoLength = (DWORD)-1;
 
-    wchar_t *wszUrl= nullptr;
-    wszUrl=fn_mbstowcs(szUrl);
-    WinHttpCrackUrl(wszUrl, wcslen(wszUrl),0,&url);
-    printf("WinHttpCrackUrl Error,LastError %lx\r\n",GetLastError());
+    wchar_t *wszUrl=fn_mbstowcs(szUrl);
+    if (!WinHttpCrackUrl(wszUrl, wcslen(wszUrl),0,&url)){
+        printf("WinHttpCrackUrl Error,LastError %lx\r\n",GetLastError());
+    }
+    wchar_t *wszHostName= new wchar_t [url.dwHostNameLength+1];
+    wmemset(wszHostName,0,url.dwHostNameLength+1);
+    wmemcpy(wszHostName,url.lpszHostName,url.dwHostNameLength);
+    url.lpszHostName=wszHostName;
 }
 
 char *Winhttp_Request(char *szUrl,char *szModel,char *szBody,vector<char *>szHandles,char *szCookies,char *szProxy,unsigned uTimeout){
@@ -63,8 +58,7 @@ char *Winhttp_Request(char *szUrl,char *szModel,char *szBody,vector<char *>szHan
     fn_initURL(szUrl, url);
     //协议头处理
     string szSumHandles;
-    char *pszUA;
-    pszUA="LogStatistic";
+    char *pszUA="LogStatistic";
     for (auto ch:szHandles) {
         string tmpStr;
         tmpStr=ch;
@@ -93,7 +87,12 @@ char *Winhttp_Request(char *szUrl,char *szModel,char *szBody,vector<char *>szHan
     if (hRequest == nullptr){
         printf("WinHttpOpenRequest Error,LastError %lx\r\n",GetLastError());
     }
-    if (!WinHttpSendRequest(hRequest,WINHTTP_NO_ADDITIONAL_HEADERS,0,WINHTTP_NO_REQUEST_DATA,0,0,0)){
+    /*
+    if (!WinHttpAddRequestHeaders(hRequest, fn_mbstowcs(szSumHandles.data()),szSumHandles.length(),WINHTTP_ADDREQ_FLAG_ADD|WINHTTP_ADDREQ_FLAG_REPLACE)){
+        printf("WinHttpAddRequestHeaders Error,LastError %lx\r\n",GetLastError());
+    }
+     */
+    if (!WinHttpSendRequest(hRequest,WINHTTP_NO_ADDITIONAL_HEADERS,0,szBody,szBody==nullptr?NULL:(DWORD)strlen(szBody),0,0)){
         printf("WinHttpSendRequest Error,LastError %lx\r\n",GetLastError());
     }
     if (!WinHttpReceiveResponse(hRequest,nullptr)){
@@ -118,7 +117,6 @@ char *Winhttp_Request(char *szUrl,char *szModel,char *szBody,vector<char *>szHan
         delete []cpBuffer;
     }
     char *cpRecvData=fn_encoding(szRecvData.data());
-
 
     //clean all var at last
     WinHttpCloseHandle(hRequest);
