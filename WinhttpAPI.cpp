@@ -1,16 +1,13 @@
 #include "WinhttpAPI.h"
 
-//函数部分
 wchar_t *fn_mbstowcs(char *cpStr){
-    size_t len=0;
-    mbstowcs_s(&len, nullptr,NULL,cpStr,_TRUNCATE);
+    size_t len=MultiByteToWideChar(CP_ACP,NULL,cpStr,-1,nullptr,0);
     wchar_t *retStr=new wchar_t [len];
-    mbstowcs_s(nullptr,retStr,len,cpStr,_TRUNCATE);
+    MultiByteToWideChar(CP_ACP,NULL,cpStr,-1,retStr,(int)len);
     return retStr;
 }
 char *fn_wcstombs(wchar_t *wcpStr)  {
-    size_t len=NULL;
-    len=WideCharToMultiByte(CP_ACP,NULL,wcpStr, -1, nullptr, 0,nullptr,nullptr);
+    size_t len=WideCharToMultiByte(CP_ACP,NULL,wcpStr, -1, nullptr, 0,nullptr,nullptr);
     char *retStr=new char[len];
     WideCharToMultiByte(CP_ACP,NULL,wcpStr,-1,retStr,(int)len,nullptr,nullptr);
     return retStr;
@@ -18,17 +15,17 @@ char *fn_wcstombs(wchar_t *wcpStr)  {
 char *fn_encoding(char *cpData){//to CN
     DWORD dwLen=MultiByteToWideChar(CP_ACP, NULL, cpData, -1, nullptr, 0);
     wchar_t *wcpData=new wchar_t [dwLen];
-    MultiByteToWideChar(CP_UTF8, 0, cpData, -1, wcpData, (int)dwLen);
+    MultiByteToWideChar(CP_UTF8, NULL, cpData, -1, wcpData, (int)dwLen);
     return fn_wcstombs(wcpData);
 }
-void fn_char_up(char * &cprData){
-    char *tmpConvert=new char[strlen(cprData) + 1];
-    memset(tmpConvert, 0, strlen(cprData) + 1);
-    memcpy(tmpConvert, cprData, strlen(cprData));
+void fn_CharToUp(char * &cpData){
+    char *tmpConvert=new char[strlen(cpData) + 1];
+    memset(tmpConvert, 0, strlen(cpData) + 1);
+    memcpy(tmpConvert, cpData, strlen(cpData));
     for (size_t i = 0; i < strlen(tmpConvert); ++i) {
-        tmpConvert[i]=toupper(tmpConvert[i]);
+        tmpConvert[i]=(char)toupper(tmpConvert[i]);
     }
-    cprData=tmpConvert;
+    cpData=tmpConvert;
 }
 void fn_initURL(char *szUrl,URL_COMPONENTS &url){
     memset(&url,0, sizeof(url));
@@ -49,9 +46,9 @@ void fn_initURL(char *szUrl,URL_COMPONENTS &url){
     url.lpszHostName=wszHostName;
 }
 
-char *Winhttp_Request(char *szUrl,char *szModel,char *szBody,vector<char *>szHandles,char *szCookies,char *szProxy,unsigned uTimeout){
+char *Winhttp_Request(char *szUrl, char *szModel, char *szBody, vector<char *>szvHandles, char *szCookies, char *szProxy, unsigned uTimeout){
     //prepare
-    fn_char_up(szModel);//转大写
+    fn_CharToUp(szModel);//转大写
     URL_COMPONENTS url;
     DWORD dwNumberOfBytesToRead=0;
 
@@ -60,9 +57,8 @@ char *Winhttp_Request(char *szUrl,char *szModel,char *szBody,vector<char *>szHan
     //协议头处理
     string szSumHandles;
     char *pszUA="LogStatistic";
-    for (auto ch:szHandles) {
-        string tmpStr;
-        tmpStr=ch;
+    for (auto ch:szvHandles) {
+        string tmpStr=ch;
         if (tmpStr.find("User-Agent")!=string::npos) {
             pszUA = ch + tmpStr.find(':') + 1;
         } else{
@@ -125,4 +121,3 @@ char *Winhttp_Request(char *szUrl,char *szModel,char *szBody,vector<char *>szHan
     WinHttpCloseHandle(hSession);
     return cpRecvData;
 }
-

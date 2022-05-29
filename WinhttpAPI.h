@@ -12,6 +12,6 @@
 using namespace std;
 #pragma comment(lib,"winhttp.lib")
 
-extern "C" __declspec(dllexport) char *Winhttp_Request(char *szUrl,char *szModel,char *szBody,vector<char *>szHandles,char *szCookies,char *szProxy,unsigned uTimeout);
+extern "C" __declspec(dllexport) char *Winhttp_Request(char *szUrl, char *szModel, char *szBody, vector<char *>szvHandles, char *szCookies, char *szProxy, unsigned uTimeout);
 
 #endif //WINHTTP_SIMPLEAPI_WINHTTPAPI_H
