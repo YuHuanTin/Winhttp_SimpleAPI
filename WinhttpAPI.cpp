@@ -2,7 +2,7 @@
 
 wchar_t *fn_mbstowcs(char *cpStr){
     size_t len=MultiByteToWideChar(CP_ACP,NULL,cpStr,-1,nullptr,0);
-    wchar_t *retStr=new wchar_t [len];
+    auto *retStr=new wchar_t [len];
     MultiByteToWideChar(CP_ACP,NULL,cpStr,-1,retStr,(int)len);
     return retStr;
 }
@@ -14,16 +14,15 @@ char *fn_wcstombs(wchar_t *wcpStr)  {
 }
 char *fn_encoding(char *cpData){//to CN
     DWORD dwLen=MultiByteToWideChar(CP_ACP, NULL, cpData, -1, nullptr, 0);
-    wchar_t *wcpData=new wchar_t [dwLen];
+    auto *wcpData=new wchar_t [dwLen];
     MultiByteToWideChar(CP_UTF8, NULL, cpData, -1, wcpData, (int)dwLen);
     return fn_wcstombs(wcpData);
 }
 void fn_CharToUp(char * &cpData){
     char *tmpConvert=new char[strlen(cpData) + 1];
     memset(tmpConvert, 0, strlen(cpData) + 1);
-    memcpy(tmpConvert, cpData, strlen(cpData));
-    for (size_t i = 0; i < strlen(tmpConvert); ++i) {
-        tmpConvert[i]=(char)toupper(tmpConvert[i]);
+    for (size_t i = 0; i < strlen(cpData); ++i) {
+        tmpConvert[i]=(char)toupper(cpData[i]);
     }
     cpData=tmpConvert;
 }
@@ -46,12 +45,11 @@ void fn_initURL(char *szUrl,URL_COMPONENTS &url){
     url.lpszHostName=wszHostName;
 }
 
-char *Winhttp_Request(char *szUrl, char *szModel, char *szBody, vector<char *>szvHandles, char *szCookies, char *szProxy, unsigned uTimeout){
+char *Winhttp_Request(char *szUrl,char *szModel,char *szBody,vector<char *>szvHandles,char *szCookies,char *szProxy,unsigned uTimeout){
     //prepare
     fn_CharToUp(szModel);//转大写
     URL_COMPONENTS url;
     DWORD dwNumberOfBytesToRead=0;
-
     //url处理
     fn_initURL(szUrl, url);
     //协议头处理
@@ -84,11 +82,11 @@ char *Winhttp_Request(char *szUrl, char *szModel, char *szBody, vector<char *>sz
     if (hRequest == nullptr){
         printf("WinHttpOpenRequest Error,LastError %lx\r\n",GetLastError());
     }
-    /*
+
     if (!WinHttpAddRequestHeaders(hRequest, fn_mbstowcs(szSumHandles.data()),szSumHandles.length(),WINHTTP_ADDREQ_FLAG_ADD|WINHTTP_ADDREQ_FLAG_REPLACE)){
         printf("WinHttpAddRequestHeaders Error,LastError %lx\r\n",GetLastError());
     }
-     */
+
     if (!WinHttpSendRequest(hRequest,WINHTTP_NO_ADDITIONAL_HEADERS,0,szBody,szBody==nullptr?NULL:(DWORD)strlen(szBody),0,0)){
         printf("WinHttpSendRequest Error,LastError %lx\r\n",GetLastError());
     }
@@ -119,5 +117,7 @@ char *Winhttp_Request(char *szUrl, char *szModel, char *szBody, vector<char *>sz
     WinHttpCloseHandle(hRequest);
     WinHttpCloseHandle(hConnect);
     WinHttpCloseHandle(hSession);
+
     return cpRecvData;
+
 }
