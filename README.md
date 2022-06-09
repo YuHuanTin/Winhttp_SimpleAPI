@@ -18,9 +18,9 @@ file:
 >   #include "..\\WinhttpAPI.h"
 
 cmakelist:
->   link_directories(lib) #the directory where the libs are stored, as defined by you. like ..\\lib
+>   link_directories(lib) #the directory where the dlls are stored, as defined by you. like ..\\lib
 > 
->   link_libraries(Winhttp_SimpleAPI.lib)
+>   link_libraries(Winhttp_SimpleAPI.dll)
 
 ### 或者使用LoadLibrary调用动态库
 
