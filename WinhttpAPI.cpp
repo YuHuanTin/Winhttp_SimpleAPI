@@ -6,16 +6,16 @@ wchar_t *fn_mbstowcs(char *cpStr){
     MultiByteToWideChar(CP_ACP,NULL,cpStr,-1,retStr,(int)len);
     return retStr;
 }
-char *fn_wcstombs(wchar_t *wcpStr)  {
+char *fn_wcstombs(wchar_t *wcpStr){
     size_t len=WideCharToMultiByte(CP_ACP,NULL,wcpStr, -1, nullptr, 0,nullptr,nullptr);
     char *retStr=new char[len];
     WideCharToMultiByte(CP_ACP,NULL,wcpStr,-1,retStr,(int)len,nullptr,nullptr);
     return retStr;
 }
-char *fn_encoding(char *cpData){//to CN
-    DWORD dwLen=MultiByteToWideChar(CP_ACP, NULL, cpData, -1, nullptr, 0);
+char *fn_encoding(char *cpData,unsigned CodePage_before,unsigned CodePage_after){//to CN
+    DWORD dwLen=MultiByteToWideChar(CodePage_before, NULL, cpData, -1, nullptr, 0);
     auto *wcpData=new wchar_t [dwLen];
-    MultiByteToWideChar(CP_UTF8, NULL, cpData, -1, wcpData, (int)dwLen);
+    MultiByteToWideChar(CodePage_after, NULL, cpData, -1, wcpData, (int)dwLen);
     return fn_wcstombs(wcpData);
 }
 void fn_CharToUp(string &szData){
@@ -32,7 +32,7 @@ void fn_initURL(string szUrl,URL_COMPONENTS &url){
     url.dwUrlPathLength   = (DWORD)-1;
     url.dwExtraInfoLength = (DWORD)-1;
 
-    wchar_t *wszUrl=fn_mbstowcs(szUrl.data());//testneed
+    wchar_t *wszUrl=fn_mbstowcs(szUrl.data());
     if (!WinHttpCrackUrl(wszUrl, wcslen(wszUrl),0,&url)){
         printf("WinHttpCrackUrl Error,LastError %lx\r\n",GetLastError());
     }
@@ -57,7 +57,6 @@ string fn_GetHandleUA(string retUA){
     }
     return retUA;
 }
-
 char *Winhttp_Request(char *inUrl,char *inModel, char *inBody, char *inHandles, char *inCookies, char *inProxy, unsigned uTimeout){
     //reInitVar
     string  szUrl{inUrl== nullptr?"":inUrl},
@@ -94,11 +93,11 @@ char *Winhttp_Request(char *inUrl,char *inModel, char *inBody, char *inHandles, 
     if (hRequest == nullptr){
         printf("WinHttpOpenRequest Error,LastError %lx\r\n",GetLastError());
     }
-    /*
-    if (!WinHttpAddRequestHeaders(hRequest, fn_mbstowcs(szSumHandles.data()),szSumHandles.length(),WINHTTP_ADDREQ_FLAG_ADD|WINHTTP_ADDREQ_FLAG_REPLACE)){
-        printf("WinHttpAddRequestHeaders Error,LastError %lx\r\n",GetLastError());
+    if (!szHandles.empty()){
+        if (!WinHttpAddRequestHeaders(hRequest, fn_mbstowcs(szHandles.data()),szHandles.length(),WINHTTP_ADDREQ_FLAG_ADD|WINHTTP_ADDREQ_FLAG_REPLACE)){
+            printf("WinHttpAddRequestHeaders Error,LastError %lx\r\n",GetLastError());
+        }
     }
-    */
     if (!WinHttpSendRequest(hRequest, WINHTTP_NO_ADDITIONAL_HEADERS, 0, szBody.data(), szBody.empty() ? NULL : (DWORD)szBody.length(), 0, 0)){
         printf("WinHttpSendRequest Error,LastError %lx\r\n",GetLastError());
     }
@@ -123,13 +122,22 @@ char *Winhttp_Request(char *inUrl,char *inModel, char *inBody, char *inHandles, 
         szRecvData+=cpBuffer;
         delete []cpBuffer;
     }
-    char *cpRecvData=fn_encoding(szRecvData.data());
+    char *retData=new char[szRecvData.length() + 1];
+    memset(retData,0,szRecvData.length() + 1);
+    memcpy(retData,szRecvData.data(), szRecvData.length()+1);
 
     //clean all var at last
     WinHttpCloseHandle(hRequest);
     WinHttpCloseHandle(hConnect);
     WinHttpCloseHandle(hSession);
-
-    return cpRecvData;
-
+    szUrl.clear();
+    szModel.clear();
+    szBody.clear();
+    szHandles.clear();
+    szCookie.clear();
+    szProxy.clear();
+    szUA.clear();
+    szRecvData.clear();
+    delete[] pwszUA;
+    return retData;
 }
