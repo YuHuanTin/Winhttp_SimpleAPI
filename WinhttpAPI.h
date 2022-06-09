@@ -2,7 +2,6 @@
 #define WINHTTP_SIMPLEAPI_WINHTTPAPI_H
 
 #include <iostream>
-#include <vector>
 #include "Windows.h"
 #include "winhttp.h"
 using namespace std;
