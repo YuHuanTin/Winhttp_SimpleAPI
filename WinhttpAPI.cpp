@@ -98,7 +98,7 @@ char *Winhttp_Request(char *inUrl,char *inModel, char *inBody, char *inHandles, 
             printf("WinHttpAddRequestHeaders Error,LastError %lx\r\n",GetLastError());
         }
     }
-    if (!WinHttpSendRequest(hRequest, WINHTTP_NO_ADDITIONAL_HEADERS, 0, szBody.data(), szBody.empty() ? NULL : (DWORD)szBody.length(), 0, 0)){
+    if (!WinHttpSendRequest(hRequest, WINHTTP_NO_ADDITIONAL_HEADERS, 0, szBody.data(), szBody.empty() ? NULL : (DWORD)szBody.length(), szBody.length(), 0)){
         printf("WinHttpSendRequest Error,LastError %lx\r\n",GetLastError());
     }
     if (!WinHttpReceiveResponse(hRequest,nullptr)){
