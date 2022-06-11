@@ -57,7 +57,7 @@ string fn_GetHandleUA(string retUA){
     }
     return retUA;
 }
-char *Winhttp_Request(char *inUrl,char *inModel, char *inBody, char *inHandles, char *inCookies, char *inProxy, unsigned uTimeout){
+char *Winhttp_Request(char *inUrl,char *inModel, char *inBody, char *&inHandles, char *inCookies, char *inProxy, unsigned uTimeout){
     //reInitVar
     string  szUrl{inUrl== nullptr?"":inUrl},
             szModel{inModel== nullptr?"":inModel},

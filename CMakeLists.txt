@@ -3,5 +3,5 @@ project(Winhttp_SimpleAPI)
 
 set(CMAKE_CXX_STANDARD 17)
 
-add_library(Winhttp_SimpleAPI SHARED WinhttpAPI.cpp WinhttpAPI.h)#SHARED (lib)
-#add_library(Winhttp_SimpleAPI STATIC WinhttpAPI.cpp WinhttpAPI.h)#STATIC (dll)
+#add_library(Winhttp_SimpleAPI SHARED WinhttpAPI.cpp WinhttpAPI.h)#SHARED (dll)
+add_library(Winhttp_SimpleAPI STATIC WinhttpAPI.cpp WinhttpAPI.h)#STATIC (lib)
