@@ -1,5 +1,6 @@
 #include "WinhttpAPI.h"
-
+#include "../qq_groupverify_windows/WinhttpAPI.h"
+char *g_szRetHandles;
 wchar_t *fn_mbstowcs(char *cpStr){
     size_t len=MultiByteToWideChar(CP_ACP,NULL,cpStr,-1,nullptr,0);
     auto *retStr=new wchar_t [len];
@@ -57,7 +58,7 @@ string fn_GetHandleUA(string retUA){
     }
     return retUA;
 }
-char *Winhttp_Request(char *inUrl,char *inModel, char *inBody, char *&inHandles, char *inCookies, char *inProxy, unsigned uTimeout){
+char *Winhttp_Request(char *inUrl,char *inModel, char *inBody, char *inHandles, char *inCookies, char *inProxy, unsigned uTimeout){
     //reInitVar
     string  szUrl{inUrl== nullptr?"":inUrl},
             szModel{inModel== nullptr?"":inModel},
@@ -112,7 +113,7 @@ char *Winhttp_Request(char *inUrl,char *inModel, char *inBody, char *&inHandles,
         wcpBuffer = new wchar_t[bytesRead / sizeof(wchar_t)];
         WinHttpQueryHeaders(hRequest, WINHTTP_QUERY_RAW_HEADERS_CRLF, nullptr, wcpBuffer, &bytesRead, nullptr);
     }
-    inHandles=fn_wcstombs(wcpBuffer);
+    g_szRetHandles=fn_wcstombs(wcpBuffer);
 
     if (!WinHttpQueryDataAvailable(hRequest,&dwNumberOfBytesToRead)){
         printf("WinHttpQueryDataAvailable Error,LastError %lX\r\n",GetLastError());
