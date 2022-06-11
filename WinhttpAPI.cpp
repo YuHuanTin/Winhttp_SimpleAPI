@@ -1,5 +1,4 @@
 #include "WinhttpAPI.h"
-#include "../qq_groupverify_windows/WinhttpAPI.h"
 char *g_szRetHandles;
 wchar_t *fn_mbstowcs(char *cpStr){
     size_t len=MultiByteToWideChar(CP_ACP,NULL,cpStr,-1,nullptr,0);
@@ -46,9 +45,9 @@ string fn_GetHandleUA(string retUA){
     if (retUA.find("User-Agent") != string::npos) {
         char *buf;
         string ch = strtok_s(retUA.data(), "\r\n", &buf);
-        while (strlen(buf)>0){
+        while (strlen(buf)>=0){
             if (ch.find("User-Agent")!=string::npos){
-                retUA=ch.substr(ch.find(':') + 1, string::npos);
+                retUA=ch.substr(ch.find(':')+1, string::npos);
                 break;
             }
             ch = strtok_s(nullptr, "\r\n",&buf);
