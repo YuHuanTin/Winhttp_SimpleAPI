@@ -81,24 +81,29 @@ char *Winhttp_Request(char *inUrl,char *inModel, char *inBody, char *inHandles, 
                 hConnect,
                 hRequest;
 
-    hSession=WinHttpOpen(pwszUA, szProxy.empty() ? WINHTTP_ACCESS_TYPE_AUTOMATIC_PROXY : WINHTTP_ACCESS_TYPE_NAMED_PROXY, szProxy.empty() ? nullptr : fn_mbstowcs(szProxy.data()), nullptr, 0);
+    hSession=WinHttpOpen(pwszUA, szProxy.empty() ? WINHTTP_ACCESS_TYPE_AUTOMATIC_PROXY : WINHTTP_ACCESS_TYPE_NAMED_PROXY, szProxy.empty() ? WINHTTP_NO_PROXY_NAME : fn_mbstowcs(szProxy.data()), szProxy.empty() ? WINHTTP_NO_PROXY_BYPASS : nullptr, 0);
     if (hSession == nullptr){
         printf("WinHttpOpen Error,LastError %lX\r\n",GetLastError());
     }
-    hConnect=WinHttpConnect(hSession, url.lpszHostName,(url.nPort==443||url.nPort==80)?INTERNET_DEFAULT_PORT:url.nPort,NULL);
+    hConnect=WinHttpConnect(hSession, url.lpszHostName,(url.nPort==443||url.nPort==80) ? INTERNET_DEFAULT_PORT : url.nPort,0);
     if (hConnect == nullptr){
         printf("WinHttpConnect Error,LastError %lX\r\n",GetLastError());
     }
-    hRequest=WinHttpOpenRequest(hConnect, fn_mbstowcs(szModel.data()), url.lpszUrlPath, nullptr, WINHTTP_NO_REFERER, WINHTTP_DEFAULT_ACCEPT_TYPES, NULL);
+    hRequest=WinHttpOpenRequest(hConnect, fn_mbstowcs(szModel.data()), url.lpszUrlPath, nullptr, nullptr, WINHTTP_DEFAULT_ACCEPT_TYPES, WINHTTP_FLAG_SECURE);
     if (hRequest == nullptr){
         printf("WinHttpOpenRequest Error,LastError %lX\r\n",GetLastError());
+    }
+    DWORD dwSetOption=WINHTTP_DISABLE_REDIRECTS;
+    if (!WinHttpSetOption(hRequest,WINHTTP_OPTION_DISABLE_FEATURE,&dwSetOption, sizeof(dwSetOption))){
+        printf("WinHttpSetOption Error,LastError %lX\r\n",GetLastError());
+
     }
     if (!szHandles.empty()){
         if (!WinHttpAddRequestHeaders(hRequest, fn_mbstowcs(szHandles.data()),szHandles.length(),WINHTTP_ADDREQ_FLAG_ADD|WINHTTP_ADDREQ_FLAG_REPLACE)){
             printf("WinHttpAddRequestHeaders Error,LastError %lX\r\n",GetLastError());
         }
     }
-    if (!WinHttpSendRequest(hRequest, WINHTTP_NO_ADDITIONAL_HEADERS, 0, szBody.data(), szBody.empty() ? NULL : (DWORD)szBody.length(), szBody.length(), 0)){
+    if (!WinHttpSendRequest(hRequest,szHandles.empty() ? WINHTTP_NO_ADDITIONAL_HEADERS : fn_mbstowcs(szHandles.data()),szHandles.length(),szBody.empty() ? WINHTTP_NO_REQUEST_DATA : szBody.data(),szBody.length(),szBody.length(),0)){
         printf("WinHttpSendRequest Error,LastError %lX\r\n",GetLastError());
     }
     if (!WinHttpReceiveResponse(hRequest,nullptr)){
