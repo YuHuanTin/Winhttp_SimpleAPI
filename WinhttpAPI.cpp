@@ -1,5 +1,4 @@
 #include "WinhttpAPI.h"
-char *g_szRetHandles;
 
 void fn_Wcs2Mbs(wchar_t *wcpStr,char *&cpDst,unsigned CP_dst){
     cpDst= nullptr;
@@ -23,95 +22,170 @@ void fn_EncodingSwitch(std::string &cpSrc,std::string &cpDst, unsigned CP_src, u
     free(cpData);
     free(wcpData);
 }
-
+void fn_Assign_WString(wstring &wStr, wchar_t *wcpStr){//赋值,并销毁内存
+    wStr=wcpStr;
+    free(wcpStr);
+}
+void fn_Assign_String(string &Str, char *cpStr){//赋值,并销毁内存
+    Str=cpStr;
+    free(cpStr);
+}
 void fn_CharToUp(string &szData){
     for (auto &ch:szData) {
         ch= (char)toupper(ch);
     }
 }
-void fn_initURL(string szUrl,URL_COMPONENTS &url){
-    memset(&url,0, sizeof(url));
-    url.dwStructSize = sizeof(url);
 
-    url.dwSchemeLength    = (DWORD)-1;
-    url.dwHostNameLength  = (DWORD)-1;
-    url.dwUrlPathLength   = (DWORD)-1;
-    url.dwExtraInfoLength = (DWORD)-1;
+vector<string> fn_SplitStr(string &szData,const string &szSplitChar){
+    char *remainBuf= szData.data();
+    vector<string> out;
+    while (strlen(remainBuf)>0){
+        char *c=strtok_s(remainBuf,szSplitChar.c_str(),&remainBuf);
+        if (c != nullptr)
+            out.emplace_back(c);
+    }
+    return out;
+}
+string fn_Header_GetData(const string& Header, const string& HeaderName){
+    size_t pos;
+    if ((pos = Header.find(HeaderName)) != string::npos){
+        pos += HeaderName.size();
+        if ((pos = Header.find(':',pos)) != string::npos){
+            ++pos;
+            size_t cmp=0;
+            while ((cmp = Header.find(' ',pos + cmp)) != string::npos){
+                ++pos;
+            }
+            return Header.substr(pos);
+        }
+    }
+    return "";
+}
+wstring fn_Header_GetUA(string headers){
+    vector<string> vHandles = fn_SplitStr(headers,"\r\n");
+    string HeaderData;
+    wchar_t *wcpData;
+    for (const string &ch:vHandles) {
+        if (!(HeaderData = fn_Header_GetData(ch, "User-Agent")).empty()){
+            fn_Mbs2Wcs(HeaderData.data(),wcpData,CP_ACP);
+            return wcpData;
+        }
+    }
+    char UA[]{"LogStatistic"};
+    fn_Mbs2Wcs(UA,wcpData,CP_ACP);
+    return wcpData;
+}
+void fn_URL_Init(string Url, URL_COMPONENTS &stUrl){
+    memset(&stUrl, 0, sizeof(stUrl));
+    stUrl.dwStructSize = sizeof(stUrl);
+
+    stUrl.dwSchemeLength    = (DWORD)-1;
+    stUrl.dwHostNameLength  = (DWORD)-1;
+    stUrl.dwUrlPathLength   = (DWORD)-1;
+    stUrl.dwExtraInfoLength = (DWORD)-1;
 
     wchar_t *wcpUrl;
-    fn_Mbs2Wcs(szUrl.data(), wcpUrl, CP_ACP);
-    if (!WinHttpCrackUrl(wcpUrl, wcslen(wcpUrl), 0, &url)){
+    fn_Mbs2Wcs(Url.data(), wcpUrl, CP_ACP);
+    if (!WinHttpCrackUrl(wcpUrl, wcslen(wcpUrl), 0, &stUrl)){
         printf("WinHttpCrackUrl Error,LastError %lX\r\n",GetLastError());
     }
-    auto *wszHostName= new wchar_t [url.dwHostNameLength+1];
-    wmemset(wszHostName,0,url.dwHostNameLength+1);
-    wmemcpy(wszHostName,url.lpszHostName,url.dwHostNameLength);
-    url.lpszHostName=wszHostName;
-    free(wcpUrl);
-}
-string fn_GetHandleUA(string retUA){
-    if (retUA.find("User-Agent") != string::npos) {
-        char *buf;
-        string ch = strtok_s(retUA.data(), "\r\n", &buf);
-        while (strlen(buf)>=0){
-            if (ch.find("User-Agent")!=string::npos){
-                retUA=ch.substr(ch.find(':')+1, string::npos);
-                break;
-            }
-            ch = strtok_s(nullptr, "\r\n",&buf);
-        }
-    } else{
-        retUA="LogStatistic";
-    }
-    return retUA;
-}
-char *Winhttp_Request(const char *inUrl,const char *inModel,const char *inBody,const char *inHandles,const char *inCookies,const char *inProxy, unsigned uTimeout){
-    //reInitVar
-    string  szUrl{inUrl== nullptr?"":inUrl},
-            szModel{inModel== nullptr?"":inModel},
-            szBody{inBody== nullptr?"":inBody},
-            szHandles{inHandles== nullptr?"":inHandles},
-            szCookie{inCookies== nullptr?"":inCookies},
-            szProxy{inProxy== nullptr?"":inProxy},
-            szUA{fn_GetHandleUA(szHandles)};
 
-    //prepare
-    wchar_t *pwszUA=fn_mbstowcs(szUA.data());
-    fn_CharToUp(szModel);
-    URL_COMPONENTS url;
+    auto *wszHostName= new wchar_t [stUrl.dwHostNameLength + 1];
+    wmemset(wszHostName, 0, stUrl.dwHostNameLength + 1);
+    wmemcpy(wszHostName, stUrl.lpszHostName, stUrl.dwHostNameLength);
+    stUrl.lpszHostName=wszHostName;
+}
+
+stHttpResponse Winhttp_Request(stHttpRequest *httpRequest){
+    stHttpResponse httpResponse;
+    if (httpRequest->Url.empty() | httpRequest->Model.empty()){
+        printf("[error]Exact request method or url\n");
+        return httpResponse;
+    }
+    struct stProgressVar{
+        wstring UA;
+        wstring Proxy;
+        wstring Model;
+        wstring Headers;
+    }progressVar;
+    wchar_t *wcpData;//Must use fn_Mbs2Wcs or fn_Wcs2Mbs first
+    char *cpData;//Must use fn_Mbs2Wcs or fn_Wcs2Mbs first
+    //UA
+    progressVar.UA = fn_Header_GetUA(httpRequest->Headers);
+    //Proxy
+    fn_Mbs2Wcs(httpRequest->Proxy.data(),wcpData,CP_ACP);
+    fn_Assign_WString(progressVar.Proxy,wcpData);
+    //Model
+    fn_CharToUp(httpRequest->Model);
+    fn_Mbs2Wcs(httpRequest->Model.data(),wcpData,CP_ACP);
+    fn_Assign_WString(progressVar.Model,wcpData);
+    //Url
+    URL_COMPONENTS stUrl;
+    fn_URL_Init(httpRequest->Url, stUrl);
+    //Headers
+    fn_Mbs2Wcs(httpRequest->Headers.data(),wcpData,CP_ACP);
+    fn_Assign_WString(progressVar.Headers,wcpData);
+
+    //ProcessVars
     DWORD dwNumberOfBytesToRead=0;
 
-    //url处理
-    fn_initURL(szUrl, url);
 
     //Winhttp
-    HINTERNET   hSession,
-                hConnect,
-                hRequest;
+    HINTERNET   hSession,hConnect,hRequest;
 
-    hSession=WinHttpOpen(pwszUA, szProxy.empty() ? WINHTTP_ACCESS_TYPE_AUTOMATIC_PROXY : WINHTTP_ACCESS_TYPE_NAMED_PROXY, szProxy.empty() ? WINHTTP_NO_PROXY_NAME : fn_mbstowcs(szProxy.data()), szProxy.empty() ? WINHTTP_NO_PROXY_BYPASS : nullptr, 0);
+    hSession=WinHttpOpen(progressVar.UA.c_str(),
+                         progressVar.Proxy.empty() ? WINHTTP_ACCESS_TYPE_AUTOMATIC_PROXY : WINHTTP_ACCESS_TYPE_NAMED_PROXY,
+                         progressVar.Proxy.empty() ? WINHTTP_NO_PROXY_NAME : progressVar.Proxy.c_str(),
+                         progressVar.Proxy.empty() ? WINHTTP_NO_PROXY_BYPASS : nullptr,
+                         0
+    );
     if (hSession == nullptr){
         printf("WinHttpOpen Error,LastError %lX\r\n",GetLastError());
     }
-    hConnect=WinHttpConnect(hSession, url.lpszHostName,(url.nPort==443||url.nPort==80) ? INTERNET_DEFAULT_PORT : url.nPort,0);
+    hConnect=WinHttpConnect(hSession,
+                            stUrl.lpszHostName,
+                            (stUrl.nPort==443||stUrl.nPort==80) ? INTERNET_DEFAULT_PORT : stUrl.nPort,
+                            0
+    );
     if (hConnect == nullptr){
         printf("WinHttpConnect Error,LastError %lX\r\n",GetLastError());
     }
-    hRequest=WinHttpOpenRequest(hConnect, fn_mbstowcs(szModel.data()), url.lpszUrlPath, nullptr, nullptr, WINHTTP_DEFAULT_ACCEPT_TYPES, WINHTTP_FLAG_SECURE);
+    hRequest=WinHttpOpenRequest(hConnect,
+                                progressVar.Model.c_str(),
+                                stUrl.lpszUrlPath,
+                                nullptr,
+                                nullptr,
+                                WINHTTP_DEFAULT_ACCEPT_TYPES,
+                                WINHTTP_FLAG_SECURE
+    );
     if (hRequest == nullptr){
         printf("WinHttpOpenRequest Error,LastError %lX\r\n",GetLastError());
     }
     DWORD dwSetOption=WINHTTP_DISABLE_REDIRECTS;
-    if (!WinHttpSetOption(hRequest,WINHTTP_OPTION_DISABLE_FEATURE,&dwSetOption, sizeof(dwSetOption))){
+    if (!WinHttpSetOption(hRequest,
+                          WINHTTP_OPTION_DISABLE_FEATURE,
+                          &dwSetOption,
+                          sizeof(dwSetOption)
+    )){
         printf("WinHttpSetOption Error,LastError %lX\r\n",GetLastError());
-
     }
-    if (!szHandles.empty()){
-        if (!WinHttpAddRequestHeaders(hRequest, fn_mbstowcs(szHandles.data()),szHandles.length(),WINHTTP_ADDREQ_FLAG_ADD|WINHTTP_ADDREQ_FLAG_REPLACE)){
+    if (!progressVar.Headers.empty()){
+        if (!WinHttpAddRequestHeaders(hRequest,
+                                      progressVar.Headers.c_str(),
+                                      progressVar.Headers.length(),
+                                      WINHTTP_ADDREQ_FLAG_ADD|WINHTTP_ADDREQ_FLAG_REPLACE
+        )){
             printf("WinHttpAddRequestHeaders Error,LastError %lX\r\n",GetLastError());
         }
     }
-    if (!WinHttpSendRequest(hRequest,szHandles.empty() ? WINHTTP_NO_ADDITIONAL_HEADERS : fn_mbstowcs(szHandles.data()),szHandles.length(),szBody.empty() ? WINHTTP_NO_REQUEST_DATA : szBody.data(),szBody.length(),szBody.length(),0)){
+    if (!WinHttpSendRequest(hRequest,
+                            progressVar.Headers.empty() ? WINHTTP_NO_ADDITIONAL_HEADERS : progressVar.Headers.c_str(),
+                            progressVar.Headers.length(),
+                            httpRequest->Body.empty() ? WINHTTP_NO_REQUEST_DATA : httpRequest->Body.data(),
+                            httpRequest->Body.length(),
+                            httpRequest->Body.length(),
+                            0
+    )){
         printf("WinHttpSendRequest Error,LastError %lX\r\n",GetLastError());
     }
     if (!WinHttpReceiveResponse(hRequest,nullptr)){
@@ -120,18 +194,32 @@ char *Winhttp_Request(const char *inUrl,const char *inModel,const char *inBody,c
 
     wchar_t *wcpBuffer = nullptr;
     DWORD bytesRead = 0;
-    WinHttpQueryHeaders(hRequest, WINHTTP_QUERY_RAW_HEADERS_CRLF, nullptr, nullptr, &bytesRead, nullptr);
+    WinHttpQueryHeaders(hRequest,
+                        WINHTTP_QUERY_RAW_HEADERS_CRLF,
+                        nullptr,
+                        nullptr,
+                        &bytesRead,
+                        nullptr
+    );
     if (bytesRead > 0) {
         wcpBuffer = new wchar_t[bytesRead / sizeof(wchar_t)];
-        WinHttpQueryHeaders(hRequest, WINHTTP_QUERY_RAW_HEADERS_CRLF, nullptr, wcpBuffer, &bytesRead, nullptr);
+        WinHttpQueryHeaders(hRequest,
+                            WINHTTP_QUERY_RAW_HEADERS_CRLF,
+                            nullptr,
+                            wcpBuffer,
+                            &bytesRead,
+                            nullptr
+        );
     }
-    g_szRetHandles=fn_wcstombs(wcpBuffer);
+    //Get response headers
+    fn_Wcs2Mbs(wcpBuffer,cpData,CP_ACP);
+    fn_Assign_String(httpResponse.Headers,cpData);
 
     if (!WinHttpQueryDataAvailable(hRequest,&dwNumberOfBytesToRead)){
         printf("WinHttpQueryDataAvailable Error,LastError %lX\r\n",GetLastError());
     }
 
-    string szRecvData;
+
     while (dwNumberOfBytesToRead > 0){
         DWORD dwRecv= 0;
         char *cpBuffer=new char[dwNumberOfBytesToRead+1];
@@ -142,27 +230,13 @@ char *Winhttp_Request(const char *inUrl,const char *inModel,const char *inBody,c
         if (!WinHttpQueryDataAvailable(hRequest,&dwNumberOfBytesToRead)){
             printf("WinHttpQueryDataAvailable Error,LastError %lX\r\n",GetLastError());
         }
-        szRecvData+=cpBuffer;
+        httpResponse.Body.append(cpBuffer);
         delete []cpBuffer;
     }
-
-    char *retData=new char[szRecvData.length() + 1];
-    memset(retData,0,szRecvData.length() + 1);
-    memcpy(retData,szRecvData.data(), szRecvData.length()+1);
-
-    //clean all var at last
+    //closeHandles
     WinHttpCloseHandle(hRequest);
     WinHttpCloseHandle(hConnect);
     WinHttpCloseHandle(hSession);
-    szUrl.clear();
-    szModel.clear();
-    szBody.clear();
-    szHandles.clear();
-    szCookie.clear();
-    szProxy.clear();
-    szUA.clear();
-    szRecvData.clear();
-    delete[] wcpBuffer;
-    delete[] pwszUA;
-    return retData;
+    free(stUrl.lpszHostName);
+    return httpResponse;
 }
