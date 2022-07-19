@@ -1,23 +1,29 @@
 #include "WinhttpAPI.h"
 char *g_szRetHandles;
-wchar_t *fn_mbstowcs(char *cpStr){
-    size_t len=MultiByteToWideChar(CP_ACP,NULL,cpStr,-1,nullptr,0);
-    auto *retStr=new wchar_t [len];
-    MultiByteToWideChar(CP_ACP,NULL,cpStr,-1,retStr,(int)len);
-    return retStr;
+
+void fn_Wcs2Mbs(wchar_t *wcpStr,char *&cpDst,unsigned CP_dst){
+    cpDst= nullptr;
+    size_t len=WideCharToMultiByte(CP_dst,NULL,wcpStr, -1, nullptr, 0,nullptr,nullptr);
+    cpDst=(char *)realloc(cpDst,len * sizeof(char));
+    WideCharToMultiByte(CP_dst,NULL,wcpStr,-1,cpDst,(int)(len * sizeof(char)),nullptr,nullptr);
 }
-char *fn_wcstombs(wchar_t *wcpStr){
-    size_t len=WideCharToMultiByte(CP_ACP,NULL,wcpStr, -1, nullptr, 0,nullptr,nullptr);
-    char *retStr=new char[len];
-    WideCharToMultiByte(CP_ACP,NULL,wcpStr,-1,retStr,(int)len,nullptr,nullptr);
-    return retStr;
+void fn_Mbs2Wcs(char *cpStr,wchar_t *&wcpDst,unsigned CP_dst){
+    wcpDst= nullptr;
+    size_t len=MultiByteToWideChar(CP_dst,NULL,cpStr,-1,nullptr,0);
+    wcpDst=(wchar_t *)realloc(wcpDst,len * sizeof(wchar_t));
+    MultiByteToWideChar(CP_dst,NULL,cpStr,-1,wcpDst,(int)(len * sizeof(wchar_t)));
 }
-char *fn_encoding(char *cpData,unsigned CodePage_before,unsigned CodePage_after){//to CN
-    DWORD dwLen=MultiByteToWideChar(CodePage_before, NULL, cpData, -1, nullptr, 0);
-    auto *wcpData=new wchar_t [dwLen];
-    MultiByteToWideChar(CodePage_after, NULL, cpData, -1, wcpData, (int)dwLen);
-    return fn_wcstombs(wcpData);
+void fn_EncodingSwitch(std::string &cpSrc,std::string &cpDst, unsigned CP_src, unsigned CP_dst){
+    char *cpData;
+    wchar_t *wcpData;
+    fn_Mbs2Wcs(cpSrc.data(),wcpData,CP_src);
+    fn_Wcs2Mbs(wcpData, cpData, CP_dst);
+    cpDst.clear();
+    cpDst.append(cpData);
+    free(cpData);
+    free(wcpData);
 }
+
 void fn_CharToUp(string &szData){
     for (auto &ch:szData) {
         ch= (char)toupper(ch);
@@ -32,14 +38,16 @@ void fn_initURL(string szUrl,URL_COMPONENTS &url){
     url.dwUrlPathLength   = (DWORD)-1;
     url.dwExtraInfoLength = (DWORD)-1;
 
-    wchar_t *wszUrl=fn_mbstowcs(szUrl.data());
-    if (!WinHttpCrackUrl(wszUrl, wcslen(wszUrl),0,&url)){
+    wchar_t *wcpUrl;
+    fn_Mbs2Wcs(szUrl.data(), wcpUrl, CP_ACP);
+    if (!WinHttpCrackUrl(wcpUrl, wcslen(wcpUrl), 0, &url)){
         printf("WinHttpCrackUrl Error,LastError %lX\r\n",GetLastError());
     }
     auto *wszHostName= new wchar_t [url.dwHostNameLength+1];
     wmemset(wszHostName,0,url.dwHostNameLength+1);
     wmemcpy(wszHostName,url.lpszHostName,url.dwHostNameLength);
     url.lpszHostName=wszHostName;
+    free(wcpUrl);
 }
 string fn_GetHandleUA(string retUA){
     if (retUA.find("User-Agent") != string::npos) {
@@ -57,7 +65,7 @@ string fn_GetHandleUA(string retUA){
     }
     return retUA;
 }
-char *Winhttp_Request(char *inUrl,char *inModel, char *inBody, char *inHandles, char *inCookies, char *inProxy, unsigned uTimeout){
+char *Winhttp_Request(const char *inUrl,const char *inModel,const char *inBody,const char *inHandles,const char *inCookies,const char *inProxy, unsigned uTimeout){
     //reInitVar
     string  szUrl{inUrl== nullptr?"":inUrl},
             szModel{inModel== nullptr?"":inModel},
