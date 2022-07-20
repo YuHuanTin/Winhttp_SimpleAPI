@@ -16,6 +16,7 @@ struct stHttpRequest{
     string Body;//Post方式等
     string Headers;//以换行(\r\n)分割
     string Proxy;
+    long TimeOut;
 };
 struct stHttpResponse{
     string Body;

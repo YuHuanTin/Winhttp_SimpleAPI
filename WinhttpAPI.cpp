@@ -169,6 +169,14 @@ stHttpResponse Winhttp_Request(stHttpRequest *httpRequest){
     )){
         printf("WinHttpSetOption Error,LastError %lX\r\n",GetLastError());
     }
+    if (!WinHttpSetTimeouts(hRequest,
+                            httpRequest->TimeOut,
+                            httpRequest->TimeOut,
+                            httpRequest->TimeOut,
+                            httpRequest->TimeOut
+    )){
+        printf("WinHttpSetTimeouts Error,LastError %lX\r\n",GetLastError());
+    }
     if (!progressVar.Headers.empty()){
         if (!WinHttpAddRequestHeaders(hRequest,
                                       progressVar.Headers.c_str(),
