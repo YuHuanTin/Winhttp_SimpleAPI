@@ -4,7 +4,6 @@
 #include <iostream>
 #include <vector>
 #include <string>
-
 #include "Windows.h"
 #include "winhttp.h"
 using namespace std;
@@ -23,7 +22,7 @@ struct stHttpResponse{
     string Headers;
 };
 
-extern __declspec(dllexport) stHttpResponse Winhttp_Request(stHttpRequest *httpRequest);
+extern "C" __declspec(dllexport) int Winhttp_Request(stHttpRequest &httpRequest,stHttpResponse &httpResponse);
 extern "C" __declspec(dllexport) void fn_EncodingSwitch(std::string &cpSrc,std::string &cpDst, unsigned CP_src, unsigned CP_dst);
 extern "C" __declspec(dllexport) void fn_Mbs2Wcs(char *cpStr,wchar_t *&wcpDst,unsigned CP_dst);
 extern "C" __declspec(dllexport) void fn_Wcs2Mbs(wchar_t *wcpStr,char *&cpDst,unsigned CP_dst);
