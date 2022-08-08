@@ -328,7 +328,7 @@ int Winhttp_Request(stHttpRequest &httpRequest,stHttpResponse &httpResponse){
     winHttp.Connect(request.HostName,request.urlComponents);
     winHttp.OpenRequest(request.Model,request.urlComponents);
     winHttp.SetOption(WINHTTP_DISABLE_REDIRECTS);
-    if (httpRequest.TimeOut != 0){
+    if (httpRequest.TimeOut > 0){
         winHttp.SetTimeOut(httpRequest.TimeOut);
     }
     if (!request.Headers.empty()){
