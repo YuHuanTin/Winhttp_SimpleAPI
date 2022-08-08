@@ -144,11 +144,11 @@ public:
     wstring HostName;
     URL_COMPONENTS urlComponents{};
     explicit operationRequest(stHttpRequest &Request){
+        initHeaders(Request.Headers);
         initUA(Request.Headers);
         initProxy(Request.Proxy);
         initModel(Request.Model);
         initUrl(Request.Url);
-        initHeaders(Request.Headers);
     }
 };
 class operationWinHttp{
@@ -328,7 +328,9 @@ int Winhttp_Request(stHttpRequest &httpRequest,stHttpResponse &httpResponse){
     winHttp.Connect(request.HostName,request.urlComponents);
     winHttp.OpenRequest(request.Model,request.urlComponents);
     winHttp.SetOption(WINHTTP_DISABLE_REDIRECTS);
-    winHttp.SetTimeOut(httpRequest.TimeOut);
+    if (httpRequest.TimeOut != 0){
+        winHttp.SetTimeOut(httpRequest.TimeOut);
+    }
     if (!request.Headers.empty()){
         winHttp.AddRequestHeaders(request.Headers);
     }
