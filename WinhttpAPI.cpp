@@ -1,19 +1,22 @@
 #include "WinhttpAPI.h"
 
-void fn_ErrorOutput(const std::string &Msg,unsigned long errorCode){
+using std::string;
+using std::vector;
+
+void fn_ErrorOutput(const string &Msg,unsigned long errorCode){
     printf("[error]%s , Last error: %#0lX\n",Msg.c_str(),errorCode);
 }
-void fn_CharToUp(std::string &szData){
+void fn_CharToUp(string &szData){
     for (char &ch:szData) {
         ch = (char)toupper(ch);
     }
 }
-std::vector<std::string> fn_SplitStr(const std::string &Data, const std::string &SplitStr){
-    std::string strRemain = Data + SplitStr;
-    std::vector<std::string> out;
+vector<string> fn_SplitStr(const string &Data, const string &SplitStr){
+    string strRemain = Data + SplitStr;
+    vector<string> out;
     if (strRemain.length() > 0){
         size_t pos[2] = {0};
-        while ((pos[1] = strRemain.find(SplitStr,pos[0])) != std::string::npos){
+        while ((pos[1] = strRemain.find(SplitStr,pos[0])) != string::npos){
             if (pos[0] == pos[1]){
                 pos[0] += SplitStr.length();
                 continue;
@@ -28,20 +31,20 @@ std::vector<std::string> fn_SplitStr(const std::string &Data, const std::string 
 class operationRequest{
 private:
     wchar_t *wcpData = nullptr;
-    void initProxy(const std::string &proxy){
+    void initProxy(const string &proxy){
         char *str = const_cast<char *>(proxy.data());
         cWinHttpSimpleAPI::fn_Mbs2Wcs(str,wcpData,CP_ACP);
         Proxy.assign(wcpData);
         free(wcpData);
     }
-    void initModel(const std::string &model){
-        std::string str = const_cast<char *>(model.data());
+    void initModel(const string &model){
+        string str = const_cast<char *>(model.data());
         fn_CharToUp(str);
         cWinHttpSimpleAPI::fn_Mbs2Wcs(str.data(),wcpData,CP_ACP);
         Model.assign(wcpData);
         free(wcpData);
     }
-    void initUrl(const std::string &url){
+    void initUrl(const string &url){
         memset(&urlComponents, 0, sizeof(urlComponents));
         urlComponents.dwStructSize = sizeof(urlComponents);
         urlComponents.dwSchemeLength    = -1;
@@ -57,11 +60,11 @@ private:
         HostName = urlComponents.lpszHostName;
         HostName = HostName.substr(0,urlComponents.dwHostNameLength);
     }
-    void initHeaders(const std::map<std::string,std::string> &mHeaders){
+    void initHeaders(const std::map<string,string> &mHeaders){
         if (mHeaders.empty()){
             return;
         }
-        std::string strHeaders;
+        string strHeaders;
         char *str = strHeaders.data();
         if (mHeaders.find("User-Agent") != mHeaders.end()){
             strHeaders = mHeaders.at("User-Agent");
@@ -175,7 +178,7 @@ public:
         }
         return true;
     }
-    bool SendRequest(const std::wstring &Headers,const std::string &Body){
+    bool SendRequest(const std::wstring &Headers,const string &Body){
         char *str = const_cast<char *>(Body.data());
         if (!WinHttpSendRequest(hRequest,
                                 Headers.empty() ? WINHTTP_NO_ADDITIONAL_HEADERS : Headers.c_str(),
@@ -197,7 +200,7 @@ public:
         }
         return true;
     }
-    bool QueryHeaders(std::string &Headers){
+    bool QueryHeaders(string &Headers){
         Headers.clear();
         WinHttpQueryHeaders(hRequest,
                             WINHTTP_QUERY_RAW_HEADERS_CRLF,
@@ -232,7 +235,7 @@ public:
         }
         return true;
     }
-    bool ReadData(std::string &Body){
+    bool ReadData(string &Body){
         if (dwNumberOfBytesToRead <= 0){
             return false;
         }
@@ -283,18 +286,22 @@ int cWinHttpSimpleAPI::Winhttp_Request(stHttpRequest &httpRequest, stHttpRespons
     winHttp.ReadData(httpResponse.Body);
     winHttp.Clear();
 
-    if (!httpResponse.allHeaders.empty() || httpResponse.allHeaders.length() > 0){
-        std::vector<std::string> vHeaders = fn_SplitStr(httpResponse.allHeaders,"\r\n");
-        for (const std::string &ch:vHeaders) {
-            std::vector<std::string> vKeyValue = fn_SplitStr(ch,": ");
+    if (!httpResponse.allHeaders.empty()){
+        vector<string> vHeaders = fn_SplitStr(httpResponse.allHeaders,"\r\n");
+        for (const string &ch:vHeaders) {
+            vector<string> vKeyValue = fn_SplitStr(ch,": ");
             if (vKeyValue.size() == 2){
-                httpResponse.Headers.insert({vKeyValue[0],vKeyValue[1]});
+                if (httpResponse.Headers.find(vKeyValue[0]) != httpResponse.Headers.end()){
+                    httpResponse.Headers[vKeyValue[0]] = httpResponse.Headers.at(vKeyValue[0]) + "\r\n" + vKeyValue[1];
+                } else{
+                    httpResponse.Headers.insert({vKeyValue[0],vKeyValue[1]});
+                }
             }
         }
     }
     return 0;
 }
-bool cWinHttpSimpleAPI::Winhttp_SetHeaders(stHttpRequest &httpRequest,const std::string &key,const std::string &value) {
+bool cWinHttpSimpleAPI::Winhttp_SetHeaders(stHttpRequest &httpRequest,const string &key,const string &value) {
     if (key.empty() || value.empty()){
         return false;
     }
@@ -305,7 +312,7 @@ bool cWinHttpSimpleAPI::Winhttp_SetHeaders(stHttpRequest &httpRequest,const std:
     }
     return true;
 }
-std::string cWinHttpSimpleAPI::Winhttp_GetHeaders(stHttpResponse &httpResponse,const std::string &key) {
+string cWinHttpSimpleAPI::Winhttp_GetHeaders(stHttpResponse &httpResponse,const string &key) {
     if (key.empty() || httpResponse.Headers.find(key) == httpResponse.Headers.end()){
         return "";
     }
@@ -351,7 +358,7 @@ void cWinHttpSimpleAPI::fn_Mbs2Wcs(char *cpStr,wchar_t *&wcpDst,unsigned CP_dst)
                         (int)(len * sizeof(wchar_t))
     );
 }
-void cWinHttpSimpleAPI::fn_EncodingSwitch(std::string &cpSrc,std::string &cpDst, unsigned CP_src, unsigned CP_dst){
+void cWinHttpSimpleAPI::fn_EncodingSwitch(string &cpSrc,string &cpDst, unsigned CP_src, unsigned CP_dst){
     char *cpData;
     wchar_t *wcpData;
     fn_Mbs2Wcs(cpSrc.data(),wcpData,CP_src);
