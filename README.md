@@ -31,5 +31,5 @@ link_libraries(Winhttp_SimpleAPI.lib)
 ```
 #pragma comment(lib,"..\\Winhttp_SimpleAPI.lib")
 ```
-## Thanks
+## Thanks:
 [![Licenses for Open Source Development](https://img.shields.io/badge/JetBrains-Open%20Source%20License-white?logo=JetBrains&style=plastic)](https://www.jetbrains.com/community/opensource/#support)
