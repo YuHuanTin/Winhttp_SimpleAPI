@@ -7,14 +7,14 @@ stHttpRequest httpRequest;
 httpRequest.Url = "https://www.baidu.com";
 httpRequest.Model = "get";
 httpRequest.TimeOut = 3000;//ms
-cWinHttpSimpleAPI::Winhttp_SetHeaders(httpRequest,"Connection","keep-alive");
-cWinHttpSimpleAPI::Winhttp_SetHeaders(httpRequest,"Context-Type","text/html");
-cWinHttpSimpleAPI::Winhttp_Request(httpRequest,httpResponse);
+cWinhttpAPI::SetHeaders(httpRequest,"Connection","keep-alive");
+cWinhttpAPI::SetHeaders(httpRequest,"Context-Type","text/html");
+cWinhttpAPI::Request(httpRequest,httpResponse);
 
 //Get the content and headers returned from a web visit.
 printf("[+]%s,%s\n",httpResponse.Body.c_str(),httpResponse.allHeaders.c_str());
 //Retrieve a specific key value from the returned Headers
-printf("[x]%s\n",cWinHttpSimpleAPI::Winhttp_GetHeaders(httpResponse,"Date").c_str());
+printf("[x]%s\n",cWinhttpAPI::GetHeaders(httpResponse,"Date").c_str());
 ```
 
 ## Import Methods:
