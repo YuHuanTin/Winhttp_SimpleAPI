@@ -11,7 +11,7 @@ string ParamsProcess_GetUA(map<string,string> &Headers){
     }
     return UA;
 }
-URL_COMPONENTS ParamsProcess_GetUrlComponents(const string &Url){
+URL_COMPONENTS ParamsProcess_InitUrlComponents(const string &Url){
     URL_COMPONENTS UrlComponents;
     memset(&UrlComponents,0,sizeof(URL_COMPONENTS));
     UrlComponents.dwStructSize = sizeof(URL_COMPONENTS);

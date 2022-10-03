@@ -6,10 +6,18 @@
 using std::string;
 using std::wstring;
 
+extern void fnCheckResult(const std::string &ErrorFrom, DWORD ErrorCode);
+void fnCheckResult(const string &ErrorFrom, DWORD ErrorCode = 0){
+    printf("[error]%s, %#0lx\n",ErrorFrom.c_str(),ErrorCode);
+}
+
 int cWinhttpAPI::Request(stHttpRequest &httpRequest, stHttpResponse &httpResponse) {
+    DWORD dwErrorCode;
+    DWORD Flag = 0;
+
     //Check
     if (httpRequest.Url.empty() || httpRequest.Model.empty()){
-        printf("[error] Exact request method or url\n");
+        fnCheckResult("Url == empty or Model == empty");
         return -1;
     }
 
@@ -20,20 +28,31 @@ int cWinhttpAPI::Request(stHttpRequest &httpRequest, stHttpResponse &httpRespons
     wstring UA = CodeCvt_StrToWStr(ParamsProcess_GetUA(this->Headers),CP_ACP);
     wstring Proxy = CodeCvt_StrToWStr(httpRequest.Proxy,CP_ACP);
     wstring ProxyBypass = CodeCvt_StrToWStr(httpRequest.ProxyBypass,CP_ACP);
-    httpInterface.Open(UA,Proxy,ProxyBypass,0);
+    if ((dwErrorCode = httpInterface.Open(UA,Proxy,ProxyBypass,0)) != 0)
+        fnCheckResult("Open", dwErrorCode);
 
     //Crack
     wstring Url = CodeCvt_StrToWStr(httpRequest.Url,CP_ACP);
-    URL_COMPONENTS UrlComponents = ParamsProcess_GetUrlComponents(httpRequest.Url);
+    URL_COMPONENTS UrlComponents = ParamsProcess_InitUrlComponents(httpRequest.Url);
     httpInterface.CrackUrl(Url, Url.length(),0,UrlComponents);
-    wstring UrlHostName (&UrlComponents.lpszHostName[0],&UrlComponents.lpszHostName[UrlComponents.dwHostNameLength]);
 
     //Connect
-    httpInterface.Connect(UrlHostName,UrlComponents.nPort);
+    wstring UrlHostName (&UrlComponents.lpszHostName[0],&UrlComponents.lpszHostName[UrlComponents.dwHostNameLength]);
+    if ((dwErrorCode = httpInterface.Connect(UrlHostName,UrlComponents.nPort)) != 0)
+        fnCheckResult("Connect", dwErrorCode);
 
     //OpenRequest
     wstring Model = CodeCvt_StrToWStr(httpRequest.Model,CP_ACP);
-    httpInterface.OpenRequest(Model,UrlComponents.lpszUrlPath, L"",0);
+    switch (UrlComponents.nScheme) {
+        case INTERNET_SCHEME_HTTP:
+            Flag = 0;
+            break;
+        case INTERNET_SCHEME_HTTPS:
+            Flag = WINHTTP_FLAG_SECURE;
+            break;
+    }
+    if ((dwErrorCode = httpInterface.OpenRequest(Model,UrlComponents.lpszUrlPath, L"",Flag)) != 0)
+        fnCheckResult("OpenRequest", dwErrorCode);
 
     //SetTimeOut
     httpInterface.SetTimeOut(httpRequest.TimeOut.ResolveTimeout,httpRequest.TimeOut.ConnectTimeout,httpRequest.TimeOut.SendTimeout,httpRequest.TimeOut.ReceiveTimeout);
@@ -45,31 +64,33 @@ int cWinhttpAPI::Request(stHttpRequest &httpRequest, stHttpResponse &httpRespons
     }
 
     //SendRequest
-    httpInterface.SendRequest(L"",httpRequest.Body,httpRequest.Body.length(),httpRequest.Body.length());
+    if ((dwErrorCode = httpInterface.SendRequest(L"",httpRequest.Body,httpRequest.Body.length(),httpRequest.Body.length())) != 0)
+        fnCheckResult("SendRequest", dwErrorCode);
 
     //ReceiveResponse
-    httpInterface.ReceiveResponse();
+    if ((dwErrorCode = httpInterface.ReceiveResponse()) != 0)
+        fnCheckResult("ReceiveResponse", dwErrorCode);
 
     //QueryHeaders
-    DWORD headersLen;
-    if ((headersLen = httpInterface.QueryHeaders(nullptr,0)) > 0){
-        auto *Buffer = (wchar_t *)malloc(headersLen);
-        memset(Buffer, 0, headersLen);
-        httpInterface.QueryHeaders(Buffer, headersLen);
+    DWORD BufferLen = httpInterface.QueryHeaders(nullptr,0);
+    if (BufferLen > 0){
+        auto *Buffer = (wchar_t *)malloc(BufferLen);
+        memset(Buffer, 0, BufferLen);
+        httpInterface.QueryHeaders(Buffer, BufferLen);
         char *charBuffer = nullptr;
         CodeCvt_WcharToChar(Buffer, charBuffer, CP_ACP);
-        httpResponse.Headers = charBuffer;
+        httpResponse.Headers.append(charBuffer,BufferLen);
         free(charBuffer);
         free(Buffer);
     }
 
     //QueryDataAvailable & ReadData
-    DWORD BufferLen = httpInterface.QueryDataAvailable();
+    BufferLen = httpInterface.QueryDataAvailable();
     while (BufferLen > 0){
         auto *Buffer = (char *)malloc(BufferLen);
         memset(Buffer,0,BufferLen);
         httpInterface.ReadData(Buffer, BufferLen);
-        httpResponse.Body.append(Buffer);
+        httpResponse.Body.append(Buffer,BufferLen);
         free(Buffer);
         BufferLen = httpInterface.QueryDataAvailable();
     }
@@ -78,7 +99,7 @@ int cWinhttpAPI::Request(stHttpRequest &httpRequest, stHttpResponse &httpRespons
     httpInterface.CloseAllHandles();
     return 0;
 }
-bool cWinhttpAPI::SetHeaders(const string &Key, const string &Value) {
+bool cWinhttpAPI::SetHeader(const string &Key, const string &Value) {
     if (Key.empty() || Value.empty())
         return false;
     if (this->Headers.find(Key) != this->Headers.end())
@@ -87,7 +108,7 @@ bool cWinhttpAPI::SetHeaders(const string &Key, const string &Value) {
         this->Headers.insert({Key, Value});
     return true;
 }
-string cWinhttpAPI::GetHeaders(const string &Key) {
+string cWinhttpAPI::GetHeader(const string &Key) {
     if (Key.empty() || this->Headers.find(Key) == this->Headers.end())
         return "";
     return this->Headers[Key];

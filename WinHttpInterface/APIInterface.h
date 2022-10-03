@@ -26,4 +26,5 @@ public:
     DWORD ReadData(char *Buffer, DWORD BufferLen);
     void CloseAllHandles();
 };
+
 #endif //WINHTTP_SIMPLEAPI_APIINTERFACE_H

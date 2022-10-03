@@ -20,14 +20,14 @@ DWORD WinHttpInterface::CrackUrl(const wstring &Url, DWORD UrlLen, DWORD Flags, 
                          Flags,
                          &UrlComponents
     )){
-        return -1;
+        return GetLastError();
     }
     return 0;
 }
 DWORD WinHttpInterface::Connect(const wstring &HostName, INTERNET_PORT Port) {
     hConnect = WinHttpConnect(hSession,
                               HostName.c_str(),
-                              (Port == 443 || Port == 80) ? INTERNET_DEFAULT_PORT : Port,
+                              Port,
                               0
     );
     if (hConnect == nullptr)
@@ -41,7 +41,7 @@ DWORD WinHttpInterface::OpenRequest(const wstring &Verb, const wstring &UrlPath,
                                   Version.c_str(),
                                   nullptr,
                                   nullptr,
-                                  Flags == 0 ? WINHTTP_FLAG_SECURE : Flags
+                                  Flags
     );
     if (hRequest == nullptr)
         return GetLastError();
@@ -109,7 +109,7 @@ DWORD WinHttpInterface::QueryHeaders(wchar_t *Buffer, DWORD BufferLen = 0) {
 DWORD WinHttpInterface::QueryDataAvailable() {
     DWORD mBufferLength = 0;
     if (!WinHttpQueryDataAvailable(hRequest,&mBufferLength))
-        return -1;
+        return GetLastError();
     return mBufferLength;
 }
 DWORD WinHttpInterface::ReadData(char *Buffer, DWORD BufferLen = 0) {
@@ -119,12 +119,15 @@ DWORD WinHttpInterface::ReadData(char *Buffer, DWORD BufferLen = 0) {
                          BufferLen,
                          &mNumberOfBytesToRead
     )){
-        return -1;
+        return GetLastError();
     }
     return mNumberOfBytesToRead;
 }
 void WinHttpInterface::CloseAllHandles() {
-    WinHttpCloseHandle(hRequest);
-    WinHttpCloseHandle(hConnect);
-    WinHttpCloseHandle(hSession);
+    if (hRequest)
+        WinHttpCloseHandle(hRequest);
+    if (hConnect)
+        WinHttpCloseHandle(hConnect);
+    if (hSession)
+        WinHttpCloseHandle(hSession);
 }

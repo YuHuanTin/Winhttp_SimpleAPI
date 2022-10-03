@@ -31,8 +31,8 @@ public:
         Request(httpRequest, httpResponse);
     }
     int Request(stHttpRequest &httpRequest, stHttpResponse &httpResponse);
-    bool SetHeaders(const std::string &Key, const std::string &Value);
-    std::string GetHeaders(const std::string &Key);
+    bool SetHeader(const std::string &Key, const std::string &Value);
+    std::string GetHeader(const std::string &Key);
 };
 
 extern std::wstring CodeCvt_StrToWStr(const std::string &Src, UINT CodePage);

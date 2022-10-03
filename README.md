@@ -1,34 +1,37 @@
 # A simple secondary wrapper for WinHttp
 
+![image](https://learn.microsoft.com/en-us/windows/win32/winhttp/images/art-winhttp3.png)
 ## Usage:
 ```
-stHttpResponse httpResponse;
 stHttpRequest httpRequest;
+stHttpResponse httpResponse;
 httpRequest.Url = "https://www.baidu.com";
 httpRequest.Model = "get";
-httpRequest.TimeOut = 3000;//ms
-cWinhttpAPI::SetHeaders(httpRequest,"Connection","keep-alive");
-cWinhttpAPI::SetHeaders(httpRequest,"Context-Type","text/html");
-cWinhttpAPI::Request(httpRequest,httpResponse);
+
+cWinhttpAPI httpAPI;
+httpAPI.SetHeader(httpRequest,"Connection","keep-alive");
+httpAPI.SetHeader(httpRequest,"Context-Type","text/html");
+httpAPI.Request(httpRequest,httpResponse);
 
 //Get the content and headers returned from a web visit.
-printf("[+]%s,%s\n",httpResponse.Body.c_str(),httpResponse.allHeaders.c_str());
+printf("[+]%s,%s\n",httpResponse.Body.c_str(),httpResponse.Headers.c_str());
 //Retrieve a specific key value from the returned Headers
-printf("[x]%s\n",cWinhttpAPI::GetHeaders(httpResponse,"Date").c_str());
+printf("[x]%s\n",httpAPI.GetHeader("Date").c_str());
 ```
 
 ## Import Methods:
-##### must have
+##### main.cpp
 ```
 #include "..\\WinhttpAPI.h"
 ```
-##### cmakelist:
+##### CMakeLists.txt:
 ```
 link_directories(lib) #the directory where the libs are stored, as defined by you. like ..\\lib
 link_libraries(Winhttp_SimpleAPI.lib)
 ```
-##### or file:
+##### Or main.cpp:
 ```
+#include "..\\WinhttpAPI.h"
 #pragma comment(lib,"..\\Winhttp_SimpleAPI.lib")
 ```
 ## Thanks:
