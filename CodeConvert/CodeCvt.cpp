@@ -51,41 +51,41 @@ string CodeCvt_WStrToStr(const wstring &Src, UINT CodePage = CP_ACP){
     );
     return result;
 }
-void CodeCvt_CharToWchar(char *pcSrc, wchar_t *&pcwDst, UINT CodePage = CP_ACP){
-    pcwDst = nullptr;
+void CodeCvt_CharToWchar(char *Src, wchar_t *&Dst, UINT CodePage = CP_ACP){
+    Dst = nullptr;
     int len = MultiByteToWideChar(CodePage,
                                   NULL,
-                                  pcSrc,
+                                  Src,
                                   -1,
                                   nullptr,
                                   0
     );
-    pcwDst = (wchar_t *)realloc(pcwDst, len * sizeof(wchar_t));
+    Dst = (wchar_t *)realloc(Dst, len * sizeof(wchar_t));
     MultiByteToWideChar(CodePage,
                         NULL,
-                        pcSrc,
+                        Src,
                         -1,
-                        pcwDst,
+                        Dst,
                         len
     );
 }
-void CodeCvt_WcharToChar(wchar_t *pcwSrc, char *&pcDst, UINT CodePage = CP_ACP){
-    pcDst = nullptr;
+void CodeCvt_WcharToChar(wchar_t *Src, char *&Dst, UINT CodePage = CP_ACP){
+    Dst = nullptr;
     int len = WideCharToMultiByte(CodePage,
                                   NULL,
-                                  pcwSrc,
+                                  Src,
                                   -1,
                                   nullptr,
                                   0,
                                   nullptr,
                                   nullptr
     );
-    pcDst = (char *)realloc(pcDst, len * sizeof(char));
+    Dst = (char *)realloc(Dst, len * sizeof(char));
     WideCharToMultiByte(CodePage,
                         NULL,
-                        pcwSrc,
+                        Src,
                         -1,
-                        pcDst,
+                        Dst,
                         len,
                         nullptr,
                         nullptr
