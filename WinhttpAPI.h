@@ -38,6 +38,7 @@ public:
     }
     int Request(stHttpRequest &Buffer, stHttpResponse &HttpResponse);
     bool SetHeader(const std::string &Key, const std::string &Value);
+    bool SetHeaders(const std::map<std::string ,std::string> &KeyValue);
     std::string GetHeader(const std::string &Key);
 };
 

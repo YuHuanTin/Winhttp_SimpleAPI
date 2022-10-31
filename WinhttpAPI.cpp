@@ -114,12 +114,23 @@ int cWinHttpAPI::Request(stHttpRequest &HttpRequest, stHttpResponse &HttpRespons
     return 0;
 }
 bool cWinHttpAPI::SetHeader(const string &Key, const string &Value) {
-    if (Key.empty() || Value.empty())
+    if (Key.empty())
         return false;
-    if (this->Headers.find(Key) != this->Headers.end())
-        this->Headers[Key,Value];
+    if (Value.empty())
+        this->Headers.erase(Key);
     else
-        this->Headers.insert({Key, Value});
+        this->Headers[Key,Value];
+    return true;
+}
+bool cWinHttpAPI::SetHeaders(const std::map<string, string> &KeyValue) {
+    for (auto &ch: KeyValue){
+        if (ch.first.empty())
+            return false;
+        if (ch.second.empty())
+            this->Headers.erase(ch.first);
+        else
+            this->Headers[ch.first,ch.second];
+    }
     return true;
 }
 string cWinHttpAPI::GetHeader(const string &Key) {
