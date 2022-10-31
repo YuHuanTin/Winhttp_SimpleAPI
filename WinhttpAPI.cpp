@@ -118,19 +118,16 @@ bool cWinHttpAPI::SetHeader(const string &Key, const string &Value) {
         return false;
     if (Value.empty())
         this->Headers.erase(Key);
+    else if (this->Headers.find(Key) != this->Headers.cend())
+        this->Headers[Key, Value];
     else
-        this->Headers[Key,Value];
+        this->Headers.insert({Key,Value});
     return true;
 }
 bool cWinHttpAPI::SetHeaders(const std::map<string, string> &KeyValue) {
-    for (auto &ch: KeyValue){
-        if (ch.first.empty())
+    for (auto &headerKeyValue: KeyValue)
+        if (!this->SetHeader(headerKeyValue.first, headerKeyValue.second))
             return false;
-        if (ch.second.empty())
-            this->Headers.erase(ch.first);
-        else
-            this->Headers[ch.first,ch.second];
-    }
     return true;
 }
 string cWinHttpAPI::GetHeader(const string &Key) {
