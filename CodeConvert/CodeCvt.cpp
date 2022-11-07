@@ -3,35 +3,13 @@
 using std::string;
 using std::wstring;
 
-wstring CodeCvt_StrToWStr(const string &Src, UINT CodePage = CP_ACP){
-    if (Src.empty())
-        return L"";
-    int len = MultiByteToWideChar(CodePage,
-                                  NULL,
-                                  Src.c_str(),
-                                  (int)Src.length(),
-                                  nullptr,
-                                  0
-    );
-    if (len <= 0)
-        return L"";
-    wstring result(len,0);
-    MultiByteToWideChar(CodePage,
-                        NULL,
-                        Src.c_str(),
-                        (int)Src.length(),
-                        &result.at(0),
-                        len
-    );
-    return result;
-}
-string CodeCvt_WStrToStr(const wstring &Src, UINT CodePage = CP_ACP){
+string CodeCvt_WStrToStr(const wstring &Src, UINT CodePage = CP_ACP) {
     if (Src.empty())
         return "";
     int len = WideCharToMultiByte(CodePage,
                                   NULL,
                                   Src.c_str(),
-                                  (int)Src.length(),
+                                  (int) Src.length(),
                                   nullptr,
                                   0,
                                   nullptr,
@@ -39,11 +17,11 @@ string CodeCvt_WStrToStr(const wstring &Src, UINT CodePage = CP_ACP){
     );
     if (len <= 0)
         return "";
-    string result(len,0);
+    string result(len, 0);
     WideCharToMultiByte(CodePage,
                         NULL,
                         Src.c_str(),
-                        (int)Src.length(),
+                        (int) Src.length(),
                         &result.at(0),
                         len,
                         nullptr,
@@ -51,26 +29,29 @@ string CodeCvt_WStrToStr(const wstring &Src, UINT CodePage = CP_ACP){
     );
     return result;
 }
-void CodeCvt_CharToWchar(char *Src, wchar_t *&Dst, UINT CodePage = CP_ACP){
-    Dst = nullptr;
+wstring CodeCvt_StrToWStr(const string &Src, UINT CodePage = CP_ACP) {
+    if (Src.empty())
+        return L"";
     int len = MultiByteToWideChar(CodePage,
                                   NULL,
-                                  Src,
-                                  -1,
+                                  Src.c_str(),
+                                  (int) Src.length(),
                                   nullptr,
                                   0
     );
-    Dst = (wchar_t *)realloc(Dst, len * sizeof(wchar_t));
+    if (len <= 0)
+        return L"";
+    wstring result(len, 0);
     MultiByteToWideChar(CodePage,
                         NULL,
-                        Src,
-                        -1,
-                        Dst,
+                        Src.c_str(),
+                        (int) Src.length(),
+                        &result.at(0),
                         len
     );
+    return result;
 }
-void CodeCvt_WcharToChar(wchar_t *Src, char *&Dst, UINT CodePage = CP_ACP){
-    Dst = nullptr;
+void CodeCvt_WcharToChar_Unique_Ptr(wchar_t *Src, std::unique_ptr<char[]> &Dst, UINT CodePage = CP_ACP) {
     int len = WideCharToMultiByte(CodePage,
                                   NULL,
                                   Src,
@@ -80,14 +61,31 @@ void CodeCvt_WcharToChar(wchar_t *Src, char *&Dst, UINT CodePage = CP_ACP){
                                   nullptr,
                                   nullptr
     );
-    Dst = (char *)realloc(Dst, len * sizeof(char));
+    Dst.reset((char *) malloc(len * sizeof(char)));
     WideCharToMultiByte(CodePage,
                         NULL,
                         Src,
                         -1,
-                        Dst,
+                        Dst.get(),
                         len,
                         nullptr,
                         nullptr
+    );
+}
+void CodeCvt_CharToWchar_Unique_Ptr(char *Src, std::unique_ptr<wchar_t[]> &Dst, UINT CodePage = CP_ACP) {
+    int len = MultiByteToWideChar(CodePage,
+                                  NULL,
+                                  Src,
+                                  -1,
+                                  nullptr,
+                                  0
+    );
+    Dst.reset((wchar_t *) malloc(len * sizeof(wchar_t)));
+    MultiByteToWideChar(CodePage,
+                        NULL,
+                        Src,
+                        -1,
+                        Dst.get(),
+                        len
     );
 }

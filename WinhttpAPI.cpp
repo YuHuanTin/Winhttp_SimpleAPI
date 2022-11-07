@@ -78,14 +78,14 @@ int cWinHttpAPI::Request(stHttpRequest &HttpRequest, stHttpResponse &HttpRespons
     //QueryHeaders
     DWORD BufferLen = httpInterface.QueryHeaders(nullptr,0);
     if (BufferLen > 0){
-        auto *Buffer = (wchar_t *)malloc(BufferLen);
-        memset(Buffer, 0, BufferLen);
-        httpInterface.QueryHeaders(Buffer, BufferLen);
-        char *charBuffer = nullptr;
-        CodeCvt_WcharToChar(Buffer, charBuffer, CP_ACP);
-        HttpResponse.Headers.append(charBuffer, BufferLen);
-        free(charBuffer);
-        free(Buffer);
+        std::unique_ptr<wchar_t []> uniqueBuffer((wchar_t *) malloc(BufferLen));
+        memset(uniqueBuffer.get(), 0, BufferLen);
+
+        httpInterface.QueryHeaders(uniqueBuffer.get(), BufferLen);
+
+        std::unique_ptr<char []> charBuffer;
+        CodeCvt_WcharToChar_Unique_Ptr(uniqueBuffer.get(), charBuffer, CP_ACP);
+        HttpResponse.Headers.append(charBuffer.get(), BufferLen);
     }
 
     //QueryDataAvailable & ReadData
@@ -100,10 +100,9 @@ int cWinHttpAPI::Request(stHttpRequest &HttpRequest, stHttpResponse &HttpRespons
             fopen_s(&fp, HttpRequest.PathOfDownloadFile.c_str(), "wb+");
         }
         while (BufferLen > 0){
-            char *Buffer = (char *)malloc(BufferLen);
-            httpInterface.ReadData(Buffer, BufferLen);
-            WriteData(Buffer, BufferLen, fp, HttpResponse);
-            free(Buffer);
+            std::unique_ptr<char[]> Buffer((char *) malloc(BufferLen));
+            httpInterface.ReadData(Buffer.get(), BufferLen);
+            WriteData(Buffer.get(), BufferLen, fp, HttpResponse);
             BufferLen = httpInterface.QueryDataAvailable();
         }
         if (fp != nullptr) fclose(fp);
