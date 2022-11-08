@@ -106,11 +106,10 @@ DWORD WinHttpInterface::QueryHeaders(wchar_t *Buffer, DWORD BufferLen = 0) {
     );
     return BufferLen;
 }
-DWORD WinHttpInterface::QueryDataAvailable() {
-    DWORD mBufferLength = 0;
-    if (!WinHttpQueryDataAvailable(hRequest,&mBufferLength))
+DWORD WinHttpInterface::QueryDataAvailable(DWORD &BufferLen) {
+    if (!WinHttpQueryDataAvailable(hRequest,&BufferLen))
         return GetLastError();
-    return mBufferLength;
+    return 0;
 }
 DWORD WinHttpInterface::ReadData(char *Buffer, DWORD BufferLen = 0) {
     DWORD mNumberOfBytesToRead = 0;

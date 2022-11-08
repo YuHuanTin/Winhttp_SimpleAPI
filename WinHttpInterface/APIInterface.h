@@ -22,7 +22,7 @@ public:
     DWORD SendRequest(const std::wstring &Headers, const std::string &Optional, DWORD OptionalLength, DWORD TotalLength);
     DWORD ReceiveResponse();
     DWORD QueryHeaders(wchar_t *Buffer, DWORD BufferLen);
-    DWORD QueryDataAvailable();
+    DWORD QueryDataAvailable(DWORD &BufferLen);
     DWORD ReadData(char *Buffer, DWORD BufferLen);
     void CloseAllHandles();
 };

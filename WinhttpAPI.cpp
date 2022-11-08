@@ -14,9 +14,15 @@ void fnCheckResult(const string &ErrorFrom, DWORD ErrorCode = 0){
 
 int cWinHttpAPI::Request(stHttpRequest &HttpRequest, stHttpResponse &HttpResponse) {
     //Check
-    if (HttpRequest.Url.empty() || HttpRequest.Model.empty()){
+    if (HttpRequest.Url.empty() || HttpRequest.Model.empty()) {
         fnCheckResult("Url == empty or Model == empty");
         return -1;
+    }
+
+    //ClearData
+    if (!HttpResponse.Body.empty() || !HttpResponse.Headers.empty()) {
+        HttpResponse.Body.clear();
+        HttpResponse.Headers.clear();
     }
 
     //Declare
@@ -78,33 +84,34 @@ int cWinHttpAPI::Request(stHttpRequest &HttpRequest, stHttpResponse &HttpRespons
     //QueryHeaders
     DWORD BufferLen = httpInterface.QueryHeaders(nullptr,0);
     if (BufferLen > 0){
-        std::unique_ptr<wchar_t []> uniqueBuffer((wchar_t *) malloc(BufferLen));
-        memset(uniqueBuffer.get(), 0, BufferLen);
+        std::unique_ptr<wchar_t []> wcharBuf((wchar_t *) malloc(BufferLen));
+        memset(wcharBuf.get(), 0, BufferLen);
+        httpInterface.QueryHeaders(wcharBuf.get(), BufferLen);
 
-        httpInterface.QueryHeaders(uniqueBuffer.get(), BufferLen);
-
-        std::unique_ptr<char []> charBuffer;
-        CodeCvt_WcharToChar_Unique_Ptr(uniqueBuffer.get(), charBuffer, CP_ACP);
-        HttpResponse.Headers.append(charBuffer.get(), BufferLen);
+        std::unique_ptr<char[]> charBuf = CodeCvt_WcharToChar_Unique_Ptr(wcharBuf.get(), CP_ACP);
+        HttpResponse.Headers.append(charBuf.get(), BufferLen);
     }
 
     //QueryDataAvailable & ReadData
-    BufferLen = httpInterface.QueryDataAvailable();
-    if (BufferLen > 0){
+    if ((dwErrorCode = httpInterface.QueryDataAvailable(BufferLen)) == 0 && BufferLen > 0) {
         FILE *fp = nullptr;
-        std::function<void(char *,DWORD,FILE *,stHttpResponse &)> WriteData;
+        std::function<void(char *, DWORD, FILE *, stHttpResponse &)> WriteData;
         if (HttpRequest.PathOfDownloadFile.empty())
-            WriteData = [](char *Buf, DWORD BufLen, FILE *fp, stHttpResponse &HttpResponse)->void {HttpResponse.Body.append(Buf, BufLen);};
-        else{
-            WriteData = [](char *Buf, DWORD BufLen, FILE *fp, stHttpResponse &HttpResponse)->void {fwrite(Buf, BufLen, 1, fp);};
+            WriteData = [](char *Buf, DWORD BufLen, FILE *fp,
+                           stHttpResponse &HttpResponse) -> void { HttpResponse.Body.append(Buf, BufLen); };
+        else {
+            WriteData = [](char *Buf, DWORD BufLen, FILE *fp, stHttpResponse &HttpResponse) -> void {
+                fwrite(Buf, BufLen, 1, fp);
+            };
             fopen_s(&fp, HttpRequest.PathOfDownloadFile.c_str(), "wb+");
         }
-        while (BufferLen > 0){
-            std::unique_ptr<char[]> Buffer((char *) malloc(BufferLen));
-            httpInterface.ReadData(Buffer.get(), BufferLen);
-            WriteData(Buffer.get(), BufferLen, fp, HttpResponse);
-            BufferLen = httpInterface.QueryDataAvailable();
-        }
+        do {
+            std::unique_ptr<char[]> charBuf((char *) malloc(BufferLen));
+            httpInterface.ReadData(charBuf.get(), BufferLen);
+            WriteData(charBuf.get(), BufferLen, fp, HttpResponse);
+            dwErrorCode = httpInterface.QueryDataAvailable(BufferLen);
+        } while (dwErrorCode == 0 && BufferLen > 0);
+
         if (fp != nullptr) fclose(fp);
     }
 

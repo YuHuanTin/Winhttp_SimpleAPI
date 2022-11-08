@@ -51,7 +51,7 @@ wstring CodeCvt_StrToWStr(const string &Src, UINT CodePage = CP_ACP) {
     );
     return result;
 }
-void CodeCvt_WcharToChar_Unique_Ptr(wchar_t *Src, std::unique_ptr<char[]> &Dst, UINT CodePage = CP_ACP) {
+std::unique_ptr<char[]> CodeCvt_WcharToChar_Unique_Ptr(wchar_t *Src, UINT CodePage = CP_ACP){
     int len = WideCharToMultiByte(CodePage,
                                   NULL,
                                   Src,
@@ -61,7 +61,7 @@ void CodeCvt_WcharToChar_Unique_Ptr(wchar_t *Src, std::unique_ptr<char[]> &Dst, 
                                   nullptr,
                                   nullptr
     );
-    Dst.reset((char *) malloc(len * sizeof(char)));
+    std::unique_ptr<char[]> Dst((char *) malloc(len * sizeof(char)));
     WideCharToMultiByte(CodePage,
                         NULL,
                         Src,
@@ -71,8 +71,9 @@ void CodeCvt_WcharToChar_Unique_Ptr(wchar_t *Src, std::unique_ptr<char[]> &Dst, 
                         nullptr,
                         nullptr
     );
+    return Dst;
 }
-void CodeCvt_CharToWchar_Unique_Ptr(char *Src, std::unique_ptr<wchar_t[]> &Dst, UINT CodePage = CP_ACP) {
+std::unique_ptr<wchar_t[]> CodeCvt_CharToWchar_Unique_Ptr(char *Src, UINT CodePage = CP_ACP){
     int len = MultiByteToWideChar(CodePage,
                                   NULL,
                                   Src,
@@ -80,7 +81,7 @@ void CodeCvt_CharToWchar_Unique_Ptr(char *Src, std::unique_ptr<wchar_t[]> &Dst, 
                                   nullptr,
                                   0
     );
-    Dst.reset((wchar_t *) malloc(len * sizeof(wchar_t)));
+    std::unique_ptr<wchar_t[]> Dst((wchar_t *) malloc(len * sizeof(wchar_t)));
     MultiByteToWideChar(CodePage,
                         NULL,
                         Src,
@@ -88,4 +89,5 @@ void CodeCvt_CharToWchar_Unique_Ptr(char *Src, std::unique_ptr<wchar_t[]> &Dst, 
                         Dst.get(),
                         len
     );
+    return Dst;
 }
