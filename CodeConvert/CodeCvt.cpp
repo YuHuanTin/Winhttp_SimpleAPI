@@ -17,17 +17,17 @@ string CodeCvt_WStrToStr(const wstring &Src, UINT CodePage = CP_ACP) {
     );
     if (len <= 0)
         return "";
-    string result(len, 0);
+    string szResult(len, 0);
     WideCharToMultiByte(CodePage,
                         NULL,
                         Src.c_str(),
                         (int) Src.length(),
-                        &result.at(0),
+                        &szResult.at(0),
                         len,
                         nullptr,
                         nullptr
     );
-    return result;
+    return szResult;
 }
 wstring CodeCvt_StrToWStr(const string &Src, UINT CodePage = CP_ACP) {
     if (Src.empty())
@@ -41,15 +41,15 @@ wstring CodeCvt_StrToWStr(const string &Src, UINT CodePage = CP_ACP) {
     );
     if (len <= 0)
         return L"";
-    wstring result(len, 0);
+    wstring wszResult(len, 0);
     MultiByteToWideChar(CodePage,
                         NULL,
                         Src.c_str(),
                         (int) Src.length(),
-                        &result.at(0),
+                        &wszResult.at(0),
                         len
     );
-    return result;
+    return wszResult;
 }
 std::unique_ptr<char[]> CodeCvt_WcharToChar_Unique_Ptr(wchar_t *Src, UINT CodePage = CP_ACP){
     int len = WideCharToMultiByte(CodePage,
@@ -61,7 +61,7 @@ std::unique_ptr<char[]> CodeCvt_WcharToChar_Unique_Ptr(wchar_t *Src, UINT CodePa
                                   nullptr,
                                   nullptr
     );
-    std::unique_ptr<char[]> Dst((char *) malloc(len * sizeof(char)));
+    std::unique_ptr<char[]> Dst(new char [len * sizeof(char)]);
     WideCharToMultiByte(CodePage,
                         NULL,
                         Src,
@@ -81,7 +81,7 @@ std::unique_ptr<wchar_t[]> CodeCvt_CharToWchar_Unique_Ptr(char *Src, UINT CodePa
                                   nullptr,
                                   0
     );
-    std::unique_ptr<wchar_t[]> Dst((wchar_t *) malloc(len * sizeof(wchar_t)));
+    std::unique_ptr<wchar_t[]> Dst(new wchar_t [len * sizeof(wchar_t)]);
     MultiByteToWideChar(CodePage,
                         NULL,
                         Src,

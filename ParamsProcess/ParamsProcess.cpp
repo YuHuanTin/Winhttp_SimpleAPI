@@ -4,12 +4,12 @@ using std::string;
 using std::map;
 
 string ParamsProcess_GetUA(map<string,string> &Headers){
-    string UA = "LogStatistic";
+    string szUA = "LogStatistic";
     for (const auto& ch: Headers) {
         if (ch.first == "User-Agent")
             return ch.second;
     }
-    return UA;
+    return szUA;
 }
 URL_COMPONENTS ParamsProcess_InitUrlComponents(const string &Url){
     URL_COMPONENTS UrlComponents;
