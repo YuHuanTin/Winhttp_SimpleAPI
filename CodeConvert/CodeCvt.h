@@ -3,11 +3,18 @@
 
 #include <string>
 #include <memory>
-#include "windows.h"
+#include "Windows.h"
 
-extern std::string CodeCvt_WStrToStr(const std::wstring &Src, UINT CodePage);
-extern std::wstring CodeCvt_StrToWStr(const std::string &Src, UINT CodePage);
-extern std::unique_ptr<char[]> CodeCvt_WcharToChar_Unique_Ptr(wchar_t *Src, UINT CodePage);
-extern std::unique_ptr<wchar_t[]> CodeCvt_CharToWchar_Unique_Ptr(char *Src, UINT CodePage);
+class CodeCvt {
+public:
+    //used for string
+    static std::string WstrToStr(const std::wstring &Src, UINT CodePage = CP_ACP);
+    static std::wstring StrToWstr(const std::string &Src, UINT CodePage = CP_ACP);
+
+    //used for char *
+    static std::unique_ptr<char[]> WstrToStr(wchar_t *Src, UINT CodePage = CP_ACP);
+    static std::unique_ptr<wchar_t[]> StrToWstr(char *Src, UINT CodePage = CP_ACP);
+};
+
 
 #endif //WINHTTP_SIMPLEAPI_CODECVT_H

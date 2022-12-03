@@ -2,7 +2,7 @@
 #define WINHTTP_SIMPLEAPI_WINHTTPAPI_H
 #include <string>
 #include <map>
-#include "windows.h"
+#include "Windows.h"
 
 struct stTimeOut{
     int ResolveTimeout = 3000;
@@ -30,19 +30,14 @@ struct stHttpResponse{
 };
 class cWinHttpAPI{
 private:
-    std::map<std::string,std::string> Headers;
+    std::map<std::string, std::string> Headers;
 public:
     cWinHttpAPI() = default;
-    cWinHttpAPI(stHttpRequest &HttpRequest, stHttpResponse &HttpResponse){
-        Request(HttpRequest, HttpResponse);
-    }
+
     int Request(stHttpRequest &Buffer, stHttpResponse &HttpResponse);
     bool SetHeader(const std::string &Key, const std::string &Value);
-    bool SetHeaders(const std::map<std::string ,std::string> &KeyValue);
+    bool SetHeaders(const std::map<std::string, std::string> &KeyValue);
     std::string GetHeader(const std::string &Key);
 };
-
-extern std::wstring CodeCvt_StrToWStr(const std::string &Src, UINT CodePage);
-extern std::string CodeCvt_WStrToStr(const std::wstring &Src, UINT CodePage);
 
 #endif //WINHTTP_SIMPLEAPI_WINHTTPAPI_H

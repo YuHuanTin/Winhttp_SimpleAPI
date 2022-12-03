@@ -11,7 +11,8 @@ set(LINK_FILES
         CodeConvert/CodeCvt.h
         CodeConvert/CodeCvt.cpp
         ParamsProcess/ParamsProcess.h
-        ParamsProcess/ParamsProcess.cpp)
+        ParamsProcess/ParamsProcess.cpp
+        )
 
 #add_library(Winhttp_SimpleAPI SHARED ${LINK_FILES})#SHARED (dll)
 add_library(Winhttp_SimpleAPI STATIC ${LINK_FILES})#STATIC (lib)

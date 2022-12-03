@@ -5,7 +5,11 @@
 #include "windows.h"
 #include "winhttp.h"
 
-extern std::string ParamsProcess_GetUA(std::map<std::string,std::string> &Headers);
-extern URL_COMPONENTS ParamsProcess_InitUrlComponents(const std::string &Url);
+class ParamProcess {
+public:
+    static std::string GetUA(std::map<std::string, std::string> &Headers);
+    static URL_COMPONENTS InitUrlComponents(const std::string &Url);
+};
+
 
 #endif //WINHTTP_SIMPLEAPI_PARAMSPROCESS_H

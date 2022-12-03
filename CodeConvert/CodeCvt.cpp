@@ -2,8 +2,9 @@
 
 using std::string;
 using std::wstring;
+using std::unique_ptr;
 
-string CodeCvt_WStrToStr(const wstring &Src, UINT CodePage = CP_ACP) {
+string CodeCvt::WstrToStr(const wstring &Src, UINT CodePage) {
     if (Src.empty())
         return "";
     int len = WideCharToMultiByte(CodePage,
@@ -29,7 +30,7 @@ string CodeCvt_WStrToStr(const wstring &Src, UINT CodePage = CP_ACP) {
     );
     return szResult;
 }
-wstring CodeCvt_StrToWStr(const string &Src, UINT CodePage = CP_ACP) {
+wstring CodeCvt::StrToWstr(const string &Src, UINT CodePage) {
     if (Src.empty())
         return L"";
     int len = MultiByteToWideChar(CodePage,
@@ -51,7 +52,7 @@ wstring CodeCvt_StrToWStr(const string &Src, UINT CodePage = CP_ACP) {
     );
     return wszResult;
 }
-std::unique_ptr<char[]> CodeCvt_WcharToChar_Unique_Ptr(wchar_t *Src, UINT CodePage = CP_ACP){
+unique_ptr<char[]> CodeCvt::WstrToStr(wchar_t *Src, UINT CodePage) {
     int len = WideCharToMultiByte(CodePage,
                                   NULL,
                                   Src,
@@ -61,7 +62,9 @@ std::unique_ptr<char[]> CodeCvt_WcharToChar_Unique_Ptr(wchar_t *Src, UINT CodePa
                                   nullptr,
                                   nullptr
     );
-    std::unique_ptr<char[]> Dst(new char [len * sizeof(char)]);
+    if (len <= 0)
+        return {};
+    unique_ptr<char[]> Dst(new char[len * sizeof(char)]);
     WideCharToMultiByte(CodePage,
                         NULL,
                         Src,
@@ -73,7 +76,7 @@ std::unique_ptr<char[]> CodeCvt_WcharToChar_Unique_Ptr(wchar_t *Src, UINT CodePa
     );
     return Dst;
 }
-std::unique_ptr<wchar_t[]> CodeCvt_CharToWchar_Unique_Ptr(char *Src, UINT CodePage = CP_ACP){
+unique_ptr<wchar_t[]> CodeCvt::StrToWstr(char *Src, UINT CodePage) {
     int len = MultiByteToWideChar(CodePage,
                                   NULL,
                                   Src,
@@ -81,7 +84,9 @@ std::unique_ptr<wchar_t[]> CodeCvt_CharToWchar_Unique_Ptr(char *Src, UINT CodePa
                                   nullptr,
                                   0
     );
-    std::unique_ptr<wchar_t[]> Dst(new wchar_t [len * sizeof(wchar_t)]);
+    if (len <= 0)
+        return {};
+    unique_ptr<wchar_t[]> Dst(new wchar_t[len * sizeof(wchar_t)]);
     MultiByteToWideChar(CodePage,
                         NULL,
                         Src,

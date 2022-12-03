@@ -7,7 +7,6 @@
 using std::string;
 using std::wstring;
 
-extern void fnCheckResult(const std::string &ErrorFrom, DWORD ErrorCode);
 void fnCheckResult(const string &ErrorFrom, DWORD ErrorCode = 0){
     printf("[error]%s, %#0lx\n",ErrorFrom.c_str(),ErrorCode);
 }
@@ -31,15 +30,15 @@ int cWinHttpAPI::Request(stHttpRequest &HttpRequest, stHttpResponse &HttpRespons
     WinHttpInterface httpInterface;
 
     //Open
-    wstring wszUA = CodeCvt_StrToWStr(ParamsProcess_GetUA(this->Headers), CP_ACP);
-    wstring wszProxy = CodeCvt_StrToWStr(HttpRequest.Proxy, CP_ACP);
-    wstring wszProxyBypass = CodeCvt_StrToWStr(HttpRequest.ProxyBypass, CP_ACP);
+    wstring wszUA = CodeCvt::StrToWstr(ParamProcess::GetUA(this->Headers), CP_ACP);
+    wstring wszProxy = CodeCvt::StrToWstr(HttpRequest.Proxy, CP_ACP);
+    wstring wszProxyBypass = CodeCvt::StrToWstr(HttpRequest.ProxyBypass, CP_ACP);
     if ((dwErrorCode = httpInterface.Open(wszUA, wszProxy, wszProxyBypass, 0)) != 0)
         fnCheckResult("Open", dwErrorCode);
 
     //Crack
-    wstring wszUrl = CodeCvt_StrToWStr(HttpRequest.Url, CP_ACP);
-    URL_COMPONENTS UrlComponents = ParamsProcess_InitUrlComponents(HttpRequest.Url);
+    wstring wszUrl = CodeCvt::StrToWstr(HttpRequest.Url, CP_ACP);
+    URL_COMPONENTS UrlComponents = ParamProcess::InitUrlComponents(HttpRequest.Url);
     httpInterface.CrackUrl(wszUrl, wszUrl.length(), 0, UrlComponents);
 
     //Connect
@@ -48,7 +47,7 @@ int cWinHttpAPI::Request(stHttpRequest &HttpRequest, stHttpResponse &HttpRespons
         fnCheckResult("Connect", dwErrorCode);
 
     //OpenRequest
-    wstring wszModel = CodeCvt_StrToWStr(HttpRequest.Model, CP_ACP);
+    wstring wszModel = CodeCvt::StrToWstr(HttpRequest.Model, CP_ACP);
     switch (UrlComponents.nScheme) {
         case INTERNET_SCHEME_HTTP:
             dwFlag = 0;
@@ -69,7 +68,7 @@ int cWinHttpAPI::Request(stHttpRequest &HttpRequest, stHttpResponse &HttpRespons
 
     //AddRequestHeaders
     for (const auto &ch : this->Headers) {
-        wstring header = (CodeCvt_StrToWStr(ch.first + ": " + ch.second + "\r\n",CP_ACP));
+        wstring header = (CodeCvt::StrToWstr(ch.first + ": " + ch.second + "\r\n",CP_ACP));
         httpInterface.AddRequestHeaders(header,0);
     }
 
@@ -88,7 +87,7 @@ int cWinHttpAPI::Request(stHttpRequest &HttpRequest, stHttpResponse &HttpRespons
         memset(wcharBuf.get(), 0, dwBufLen);
         httpInterface.QueryHeaders(wcharBuf.get(), dwBufLen);
 
-        std::unique_ptr<char[]> charBuf = CodeCvt_WcharToChar_Unique_Ptr(wcharBuf.get(), CP_ACP);
+        std::unique_ptr<char[]> charBuf = CodeCvt::WstrToStr(wcharBuf.get(), CP_ACP);
         HttpResponse.Headers.append(charBuf.get(), strlen(charBuf.get()));
     }
 
