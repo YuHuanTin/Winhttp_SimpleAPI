@@ -11,6 +11,11 @@ void fnCheckResult(const string &ErrorFrom, DWORD ErrorCode = 0){
     printf("[error]%s, %#0lx\n",ErrorFrom.c_str(),ErrorCode);
 }
 
+int cWinHttpAPI::Request() {
+    if (pHttpRequest != nullptr && pHttpResponse != nullptr)
+        return Request(*pHttpRequest,*pHttpResponse);
+    return -1;
+}
 int cWinHttpAPI::Request(stHttpRequest &HttpRequest, stHttpResponse &HttpResponse) {
     //Check
     if (HttpRequest.Url.empty() || HttpRequest.Model.empty()) {
