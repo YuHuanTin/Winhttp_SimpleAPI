@@ -40,10 +40,10 @@ stHttpRequest httpRequest;
 stHttpResponse httpResponse;
 httpRequest.Url = "http://test.com/5Gb.bin";//example file url
 httpRequest.Model = "get";
-httpRequest.PathOfDownloadFile = "C:\\5Gb.bin";
+httpRequest.SaveMethod = {stHttpRequest::stSaveMethod::FILE_STREAM, "C:\\5.bin"};
 
-cWinHttpAPI httpAPI;
-httpAPI.Request(httpRequest,httpResponse);
+cWinHttpAPI httpAPI(httpRequest,httpResponse);
+httpAPI.request();
 //At the same time,the headers exist and the body has empty
 ```
 
