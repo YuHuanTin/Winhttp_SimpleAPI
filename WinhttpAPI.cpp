@@ -7,13 +7,12 @@
 using std::string;
 using std::wstring;
 
-void fnCheckResult(const string &ErrorFrom, DWORD ErrorCode = 0){
-    printf("[error]%s, %#0lx\n",ErrorFrom.c_str(),ErrorCode);
+void fnCheckResult(const string &ErrorFrom, DWORD ErrorCode = 0) {
+    printf("[error]%s, %#0lx\n", ErrorFrom.c_str(), ErrorCode);
 }
-
 int cWinHttpAPI::Request() {
     if (pHttpRequest != nullptr && pHttpResponse != nullptr)
-        return Request(*pHttpRequest,*pHttpResponse);
+        return Request(*pHttpRequest, *pHttpResponse);
     return -1;
 }
 int cWinHttpAPI::Request(stHttpRequest &HttpRequest, stHttpResponse &HttpResponse) {
@@ -38,8 +37,10 @@ int cWinHttpAPI::Request(stHttpRequest &HttpRequest, stHttpResponse &HttpRespons
     wstring wszUA = CodeCvt::StrToWstr(ParamProcess::GetUA(this->Headers), CP_ACP);
     wstring wszProxy = CodeCvt::StrToWstr(HttpRequest.Proxy, CP_ACP);
     wstring wszProxyBypass = CodeCvt::StrToWstr(HttpRequest.ProxyBypass, CP_ACP);
-    if ((dwErrorCode = httpInterface.Open(wszUA, wszProxy, wszProxyBypass, 0)) != 0)
+    if ((dwErrorCode = httpInterface.Open(wszUA, wszProxy, wszProxyBypass, 0)) != 0) {
         fnCheckResult("Open", dwErrorCode);
+        return -1;
+    }
 
     //Crack
     wstring wszUrl = CodeCvt::StrToWstr(HttpRequest.Url, CP_ACP);
@@ -47,9 +48,11 @@ int cWinHttpAPI::Request(stHttpRequest &HttpRequest, stHttpResponse &HttpRespons
     httpInterface.CrackUrl(wszUrl, wszUrl.length(), 0, UrlComponents);
 
     //Connect
-    wstring wszUrlHostName (&UrlComponents.lpszHostName[0], &UrlComponents.lpszHostName[UrlComponents.dwHostNameLength]);
-    if ((dwErrorCode = httpInterface.Connect(wszUrlHostName, UrlComponents.nPort)) != 0)
+    wstring wszUrlHostName(&UrlComponents.lpszHostName[0], &UrlComponents.lpszHostName[UrlComponents.dwHostNameLength]);
+    if ((dwErrorCode = httpInterface.Connect(wszUrlHostName, UrlComponents.nPort)) != 0) {
         fnCheckResult("Connect", dwErrorCode);
+        return -1;
+    }
 
     //OpenRequest
     wstring wszModel = CodeCvt::StrToWstr(HttpRequest.Model, CP_ACP);
@@ -61,34 +64,42 @@ int cWinHttpAPI::Request(stHttpRequest &HttpRequest, stHttpResponse &HttpRespons
             dwFlag = WINHTTP_FLAG_SECURE;
             break;
     }
-    if ((dwErrorCode = httpInterface.OpenRequest(wszModel, UrlComponents.lpszUrlPath, L"", dwFlag)) != 0)
+    if ((dwErrorCode = httpInterface.OpenRequest(wszModel, UrlComponents.lpszUrlPath, L"", dwFlag)) != 0) {
         fnCheckResult("OpenRequest", dwErrorCode);
+        return -1;
+    }
 
     //SetTimeOut
-    httpInterface.SetTimeOut(HttpRequest.TimeOut.ResolveTimeout, HttpRequest.TimeOut.ConnectTimeout, HttpRequest.TimeOut.SendTimeout, HttpRequest.TimeOut.ReceiveTimeout);
+    httpInterface.SetTimeOut(HttpRequest.TimeOut.ResolveTimeout, HttpRequest.TimeOut.ConnectTimeout,
+                             HttpRequest.TimeOut.SendTimeout, HttpRequest.TimeOut.ReceiveTimeout);
 
     //SetOption
-    if (HttpRequest.Option.dwOption != 0)
-        httpInterface.SetOption(HttpRequest.Option.dwOption,HttpRequest.Option.lpBuffer);
+    if (HttpRequest.WinhttpOption.dwOption != 0)
+        httpInterface.SetOption(HttpRequest.WinhttpOption.dwOption, HttpRequest.WinhttpOption.lpBuffer);
 
     //AddRequestHeaders
-    for (const auto &ch : this->Headers) {
-        wstring header = (CodeCvt::StrToWstr(ch.first + ": " + ch.second + "\r\n",CP_ACP));
-        httpInterface.AddRequestHeaders(header,0);
+    for (const auto &ch: this->Headers) {
+        wstring header = (CodeCvt::StrToWstr(ch.first + ": " + ch.second + "\r\n", CP_ACP));
+        httpInterface.AddRequestHeaders(header, 0);
     }
 
     //SendRequest
-    if ((dwErrorCode = httpInterface.SendRequest(L"", HttpRequest.Body, HttpRequest.Body.length(), HttpRequest.Body.length())) != 0)
+    if ((dwErrorCode = httpInterface.SendRequest(L"", HttpRequest.Body, HttpRequest.Body.length(),
+                                                 HttpRequest.Body.length())) != 0) {
         fnCheckResult("SendRequest", dwErrorCode);
+        return -1;
+    }
 
     //ReceiveResponse
-    if ((dwErrorCode = httpInterface.ReceiveResponse()) != 0)
+    if ((dwErrorCode = httpInterface.ReceiveResponse()) != 0) {
         fnCheckResult("ReceiveResponse", dwErrorCode);
+        return -1;
+    }
 
     //QueryHeaders
     DWORD dwBufLen = httpInterface.QueryHeaders(nullptr, 0);
-    if (dwBufLen > 0){
-        std::unique_ptr<wchar_t []> wcharBuf(new wchar_t [dwBufLen]);
+    if (dwBufLen > 0) {
+        std::unique_ptr<wchar_t[]> wcharBuf(new wchar_t[dwBufLen]);
         memset(wcharBuf.get(), 0, dwBufLen);
         httpInterface.QueryHeaders(wcharBuf.get(), dwBufLen);
 
@@ -99,25 +110,26 @@ int cWinHttpAPI::Request(stHttpRequest &HttpRequest, stHttpResponse &HttpRespons
     //QueryDataAvailable & ReadData
     if ((dwErrorCode = httpInterface.QueryDataAvailable(dwBufLen)) == 0 && dwBufLen > 0) {
         FILE *fp = nullptr;
-        std::function<void(char *, DWORD, FILE *, stHttpResponse &)> fnWriteData;
-        if (HttpRequest.PathOfDownloadFile.empty())
-            fnWriteData = [](char *Buf, DWORD BufLen, FILE *fp, stHttpResponse &HttpResponse) -> void {
+        std::function<void(char *, DWORD, FILE *, stHttpResponse &)> writeData;
+        if (HttpRequest.SaveMethod.Method == stHttpRequest::stSaveMethod::eMethod::FILE_STREAM) {
+            writeData = [](char *Buf, DWORD BufLen, FILE *fp, stHttpResponse &HttpResponse) -> void {
                 HttpResponse.Body.append(Buf, BufLen);
             };
-        else {
-            fnWriteData = [](char *Buf, DWORD BufLen, FILE *fp, stHttpResponse &HttpResponse) -> void {
+        } else {
+            writeData = [](char *Buf, DWORD BufLen, FILE *fp, stHttpResponse &HttpResponse) -> void {
                 fwrite(Buf, BufLen, 1, fp);
             };
-            fopen_s(&fp, HttpRequest.PathOfDownloadFile.c_str(), "wb+");
+            if (fopen_s(&fp, HttpRequest.SaveMethod.SavePath.c_str(), "wb+") != 0) {
+                fnCheckResult("OpenFile", GetLastError());
+                return -1;
+            }
         }
         do {
-            std::unique_ptr<char[]> charBuf(new char[dwBufLen]);
+            std::unique_ptr<char[]> charBuf = std::make_unique<char[]>(dwBufLen);
             httpInterface.ReadData(charBuf.get(), dwBufLen);
-            fnWriteData(charBuf.get(), dwBufLen, fp, HttpResponse);
+            writeData(charBuf.get(), dwBufLen, fp, HttpResponse);
             dwErrorCode = httpInterface.QueryDataAvailable(dwBufLen);
         } while (dwErrorCode == 0 && dwBufLen > 0);
-
-        if (fp != nullptr) fclose(fp);
     }
 
     //CloseHandle
@@ -132,7 +144,7 @@ bool cWinHttpAPI::SetHeader(const string &Key, const string &Value) {
     else if (this->Headers.find(Key) != this->Headers.cend())
         this->Headers[Key, Value];
     else
-        this->Headers.insert({Key,Value});
+        this->Headers.insert({Key, Value});
     return true;
 }
 bool cWinHttpAPI::SetHeaders(const std::map<string, string> &KeyValue) {

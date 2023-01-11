@@ -64,7 +64,7 @@ unique_ptr<char[]> CodeCvt::WstrToStr(wchar_t *Src, UINT CodePage) {
     );
     if (len <= 0)
         return {};
-    unique_ptr<char[]> Dst(new char[len * sizeof(char)]);
+    unique_ptr<char[]> Dst = std::make_unique<char[]>(len * sizeof(char));
     WideCharToMultiByte(CodePage,
                         NULL,
                         Src,
@@ -86,7 +86,7 @@ unique_ptr<wchar_t[]> CodeCvt::StrToWstr(char *Src, UINT CodePage) {
     );
     if (len <= 0)
         return {};
-    unique_ptr<wchar_t[]> Dst(new wchar_t[len * sizeof(wchar_t)]);
+    unique_ptr<wchar_t[]> Dst = std::make_unique<wchar_t[]>(len * sizeof(wchar_t));
     MultiByteToWideChar(CodePage,
                         NULL,
                         Src,

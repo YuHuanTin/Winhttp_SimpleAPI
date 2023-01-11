@@ -5,32 +5,38 @@
 #include "Windows.h"
 #include "CodeConvert/CodeCvt.h"
 
-struct stTimeOut{
+struct stTimeOut {
     int ResolveTimeout = 3000;
     int ConnectTimeout = 3000;
     int SendTimeout = 3000;
     int ReceiveTimeout = 3000;
 };
-struct stWinHttpOption{
+struct stWinHttpOption {
     DWORD dwOption = 0;
     DWORD lpBuffer = 0;
 };
-struct stHttpRequest{
+struct stHttpRequest {
     std::string Url;
     std::string Model;
     std::string Body;
     std::string Proxy;
     std::string ProxyBypass;
-    std::string PathOfDownloadFile;
+    struct stSaveMethod {
+        enum eMethod {
+            STRING_STREAM, FILE_STREAM
+        } Method;
+        std::string SavePath;
+        stSaveMethod(eMethod DownloadMethod, const std::string &Buffer = std::string()) : Method(DownloadMethod), SavePath(Buffer) {}
+    } SaveMethod{stSaveMethod::eMethod::STRING_STREAM};
     stTimeOut TimeOut;
-    stWinHttpOption Option;
+    stWinHttpOption WinhttpOption;
 };
-struct stHttpResponse{
+struct stHttpResponse {
     std::string Body;
     std::string Headers;
 };
 
-class cWinHttpAPI{
+class cWinHttpAPI {
 private:
     std::map<std::string, std::string> Headers;
     stHttpRequest *pHttpRequest = nullptr;
@@ -39,7 +45,7 @@ public:
     cWinHttpAPI() = default;
 
     cWinHttpAPI(stHttpRequest &httpRequest, stHttpResponse &httpResponse)
-    : pHttpRequest(&httpRequest), pHttpResponse(&httpResponse){}
+            : pHttpRequest(&httpRequest), pHttpResponse(&httpResponse) {}
 
     //use with ctor(httpRequest,httpResponse)
     int Request();
