@@ -19,30 +19,30 @@ link_libraries(Winhttp_SimpleAPI.lib)
 ## Usage:
 ##### Request a website information
 ```c++
-stHttpRequest httpRequest;
-stHttpResponse httpResponse;
-httpRequest.Url = "https://www.baidu.com";
-httpRequest.Model = "get";
+HttpRequestT httpRequest;
+HttpResponseT httpResponse;
+httpRequest.url = "https://www.baidu.com";
+httpRequest.protocol = "get";
 
-cWinHttpAPI httpAPI;
+WinhttpAPI httpAPI;
 httpAPI.SetHeader(httpRequest,"Connection","keep-alive");
 httpAPI.SetHeader(httpRequest,"Context-Type","text/html");
 httpAPI.Request(httpRequest,httpResponse);
 
 //Get the content and headers returned from a web visit.
-printf("[+]%s,%s\n",httpResponse.Body.c_str(),httpResponse.Headers.c_str());
-//Retrieve a specific key value from the returned Headers
+printf("[+]%s,%s\n",httpResponse.body.c_str(),httpResponse.headers.c_str());
+//Retrieve a specific key value from the returned headers
 printf("[x]%s\n",httpAPI.GetHeader("Date").c_str());
 ```
 ##### Request a large file
 ```c++
-stHttpRequest httpRequest;
-stHttpResponse httpResponse;
-httpRequest.Url = "http://test.com/5Gb.bin";//example file url
-httpRequest.Model = "get";
-httpRequest.SaveMethod = {stHttpRequest::stSaveMethod::FILE_STREAM, "C:\\5.bin"};
+HttpRequestT httpRequest;
+HttpResponseT httpResponse;
+httpRequest.url = "http://test.com/5Gb.bin";//example file url
+httpRequest.protocol = "get";
+httpRequest.SaveMethod = {HttpRequestT::SaveMethodT::FILE_STREAM, "C:\\5.bin"};
 
-cWinHttpAPI httpAPI(httpRequest,httpResponse);
+WinhttpAPI httpAPI(httpRequest,httpResponse);
 httpAPI.request();
 //At the same time,the headers exist and the body has empty
 ```

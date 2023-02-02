@@ -24,7 +24,7 @@ public:
     DWORD QueryHeaders(wchar_t *Buffer, DWORD BufferLen);
     DWORD QueryDataAvailable(DWORD &BufferLen);
     DWORD ReadData(char *Buffer, DWORD BufferLen);
-    void CloseAllHandles();
+    ~WinHttpInterface();
 };
 
 #endif //WINHTTP_SIMPLEAPI_APIINTERFACE_H

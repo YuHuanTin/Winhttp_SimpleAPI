@@ -122,11 +122,17 @@ DWORD WinHttpInterface::ReadData(char *Buffer, DWORD BufferLen = 0) {
     }
     return mNumberOfBytesToRead;
 }
-void WinHttpInterface::CloseAllHandles() {
-    if (hRequest)
+WinHttpInterface::~WinHttpInterface() {
+    if (hRequest) {
         WinHttpCloseHandle(hRequest);
-    if (hConnect)
+        hRequest = nullptr;
+    }
+    if (hConnect) {
         WinHttpCloseHandle(hConnect);
-    if (hSession)
+        hConnect = nullptr;
+    }
+    if (hSession) {
         WinHttpCloseHandle(hSession);
+        hSession = nullptr;
+    }
 }

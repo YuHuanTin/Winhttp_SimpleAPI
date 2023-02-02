@@ -1,59 +1,69 @@
 #ifndef WINHTTP_SIMPLEAPI_WINHTTPAPI_H
 #define WINHTTP_SIMPLEAPI_WINHTTPAPI_H
-#include <string>
-#include <map>
-#include "Windows.h"
-#include "CodeConvert/CodeCvt.h"
 
-struct stTimeOut {
-    int ResolveTimeout = 3000;
-    int ConnectTimeout = 3000;
-    int SendTimeout = 3000;
-    int ReceiveTimeout = 3000;
+#include <utility>
+
+#include "DataStruct/DataStruct.h"
+
+struct TimeoutT {
+    int resolveTimeout = 3000;
+    int connectTimeout = 3000;
+    int sendTimeout    = 3000;
+    int receiveTimeout = 3000;
 };
-struct stWinHttpOption {
+struct WinhttpOptionT {
     DWORD dwOption = 0;
     DWORD lpBuffer = 0;
 };
-struct stHttpRequest {
-    std::string Url;
-    std::string Model;
-    std::string Body;
-    std::string Proxy;
-    std::string ProxyBypass;
-    struct stSaveMethod {
-        enum eMethod {
+struct HttpRequestT {
+    std::string url;
+    std::string protocol;
+    std::string body;
+    std::string proxy;
+    std::string proxyBypass;
+
+    struct SaveMethodT {
+        enum MethodE {
             STRING_STREAM, FILE_STREAM
-        } Method;
-        std::string SavePath;
-        stSaveMethod(eMethod DownloadMethod, const std::string &Buffer = std::string()) : Method(DownloadMethod), SavePath(Buffer) {}
-    } SaveMethod{stSaveMethod::eMethod::STRING_STREAM};
-    stTimeOut TimeOut;
-    stWinHttpOption WinhttpOption;
+        };
+        MethodE     downloadMethod;
+        std::string downloadPath;
+
+        SaveMethodT(MethodE DownloadMethod, std::string DownloadPath = {}) : downloadMethod(DownloadMethod), downloadPath(std::move(DownloadPath)) {}
+    };
+
+    SaveMethodT    saveMethod;
+    TimeoutT       timeout;
+    WinhttpOptionT winhttpOption;
+
+    HttpRequestT() : saveMethod(SaveMethodT::MethodE::STRING_STREAM) {}
+
+    HttpRequestT(std::string Url, std::string Method, SaveMethodT SaveMethod)
+            : url(std::move(Url)), protocol(std::move(Method)), saveMethod(std::move(SaveMethod)) {}
 };
-struct stHttpResponse {
+struct HttpResponseT {
     std::string Body;
     std::string Headers;
 };
 
-class cWinHttpAPI {
+class WinhttpAPI {
 private:
-    std::map<std::string, std::string> Headers;
-    stHttpRequest *pHttpRequest = nullptr;
-    stHttpResponse *pHttpResponse = nullptr;
+    std::map<std::string, std::string> headers;
+    HttpRequestT                       *pHttpRequest  = nullptr;
+    HttpResponseT                      *pHttpResponse = nullptr;
 public:
-    cWinHttpAPI() = default;
+    WinhttpAPI() = default;
 
-    cWinHttpAPI(stHttpRequest &httpRequest, stHttpResponse &httpResponse)
-            : pHttpRequest(&httpRequest), pHttpResponse(&httpResponse) {}
+    WinhttpAPI(HttpRequestT &HttpRequest, HttpResponseT &HttpResponse) : pHttpRequest(&HttpRequest), pHttpResponse(&HttpResponse) {}
 
-    //use with ctor(httpRequest,httpResponse)
-    int Request();
+    void Request();
 
-    //use with ctor(default)
-    int Request(stHttpRequest &Buffer, stHttpResponse &HttpResponse);
+    void Request(HttpRequestT &HttpRequest, HttpResponseT &HttpResponse);
+
     bool SetHeader(const std::string &Key, const std::string &Value);
+
     bool SetHeaders(const std::map<std::string, std::string> &KeyValue);
+
     std::string GetHeader(const std::string &Key);
 };
 
