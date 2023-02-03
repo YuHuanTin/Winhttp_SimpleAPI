@@ -32,29 +32,29 @@ void WinhttpAPI::Request(HttpRequestT &HttpRequest, HttpResponseT &HttpResponse)
             HttpResponse.Headers.clear();
         }
 
-        //Declare
+        // Declare
         DWORD dwFlag = 0;
         WinHttpInterface httpInterface;
 
-        //Open
+        // Open
         wstring wszUA = CodeCvt::StrToWstr(ParamProcess::GetUA(this->headers), CP_ACP);
         wstring wszProxy = CodeCvt::StrToWstr(HttpRequest.proxy, CP_ACP);
         wstring wszProxyBypass = CodeCvt::StrToWstr(HttpRequest.proxyBypass, CP_ACP);
         if ((lastError = httpInterface.Open(wszUA, wszProxy, wszProxyBypass, 0)) != 0)
             throw runtime_error("failed Open");
 
-        //Crack
+        // Crack
         wstring wszUrl = CodeCvt::StrToWstr(HttpRequest.url, CP_ACP);
         URL_COMPONENTS UrlComponents = ParamProcess::InitUrlComponents();
         if ((lastError = httpInterface.CrackUrl(wszUrl, wszUrl.length(), 0, UrlComponents)) != 0)
             throw runtime_error("failed CrackUrl");
 
-        //Connect
+        // Connect
         wstring wszUrlHostName(&UrlComponents.lpszHostName[0], &UrlComponents.lpszHostName[UrlComponents.dwHostNameLength]);
         if ((lastError = httpInterface.Connect(wszUrlHostName, UrlComponents.nPort)) != 0)
             throw runtime_error("failed Connect");
 
-        //OpenRequest
+        // OpenRequest
         wstring wszModel = CodeCvt::StrToWstr(HttpRequest.protocol, CP_ACP);
         switch (UrlComponents.nScheme) {
             case INTERNET_SCHEME_HTTP:
@@ -67,30 +67,30 @@ void WinhttpAPI::Request(HttpRequestT &HttpRequest, HttpResponseT &HttpResponse)
         if ((lastError = httpInterface.OpenRequest(wszModel, UrlComponents.lpszUrlPath, L"", dwFlag)) != 0)
             throw runtime_error("failed OpenRequest");
 
-        //SetTimeOut
+        // SetTimeOut
         httpInterface.SetTimeOut(HttpRequest.timeout.resolveTimeout, HttpRequest.timeout.connectTimeout,
                                  HttpRequest.timeout.sendTimeout, HttpRequest.timeout.receiveTimeout);
 
-        //SetOption
+        // SetOption
         if (HttpRequest.winhttpOption.dwOption != 0)
             httpInterface.SetOption(HttpRequest.winhttpOption.dwOption, HttpRequest.winhttpOption.lpBuffer);
 
-        //AddRequestHeaders
+        // AddRequestHeaders
         for (const auto &ch: this->headers) {
             wstring header = (CodeCvt::StrToWstr(ch.first + ": " + ch.second + "\r\n", CP_ACP));
             httpInterface.AddRequestHeaders(header, 0);
         }
 
-        //SendRequest
+        // SendRequest
         if ((lastError = httpInterface.SendRequest(L"", HttpRequest.body, HttpRequest.body.length(),
                                                    HttpRequest.body.length())) != 0)
             throw runtime_error("failed SendRequest");
 
-        //ReceiveResponse
+        // ReceiveResponse
         if ((lastError = httpInterface.ReceiveResponse()) != 0)
             throw runtime_error("failed ReceiveResponse");
 
-        //QueryHeaders
+        // QueryHeaders
         DWORD dwBufLen = httpInterface.QueryHeaders(nullptr, 0);
         if (dwBufLen > 0) {
             std::unique_ptr<wchar_t[]> wBuf = std::make_unique<wchar_t[]>(dwBufLen);

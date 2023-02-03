@@ -38,8 +38,8 @@ struct HttpRequestT {
 
     HttpRequestT() : saveMethod(SaveMethodT::MethodE::STRING_STREAM) {}
 
-    HttpRequestT(std::string Url, std::string Method, SaveMethodT SaveMethod = {SaveMethodT::STRING_STREAM})
-            : url(std::move(Url)), protocol(std::move(Method)), saveMethod(std::move(SaveMethod)) {
+    HttpRequestT(std::string Url, std::string Protocol, SaveMethodT SaveMethod = {SaveMethodT::STRING_STREAM})
+            : url(std::move(Url)), protocol(std::move(Protocol)), saveMethod(std::move(SaveMethod)) {
     }
 };
 struct HttpResponseT {

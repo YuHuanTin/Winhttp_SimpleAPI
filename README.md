@@ -2,14 +2,15 @@
 
 ![image](https://learn.microsoft.com/en-us/windows/win32/winhttp/images/art-winhttp3.png)
 ## Import Methods:
-##### main.cpp
-```c++
-#include "..\\WinhttpAPI.h"
-```
 ##### CMakeLists.txt:
 ```c++
-link_directories(lib) #the directory where the libs are stored, as defined by you. like ..\\lib
-link_libraries(Winhttp_SimpleAPI.lib)
+include_directories(${PROJECT_SOURCE_DIR}/include)
+add_executable(${PROJECT_NAME} main.cpp)
+target_link_libraries(${PROJECT_NAME} ${PROJECT_SOURCE_DIR}/lib/Winhttp_SimpleAPI.lib)
+```
+##### main.cpp
+```c++
+#include <WinhttpAPI.h>
 ```
 ##### Or main.cpp:
 ```c++
@@ -25,22 +26,19 @@ httpRequest.url = "https://www.baidu.com";
 httpRequest.protocol = "get";
 
 WinhttpAPI httpAPI;
-httpAPI.SetHeader(httpRequest,"Connection","keep-alive");
-httpAPI.SetHeader(httpRequest,"Context-Type","text/html");
+httpAPI.SetHeader("Connection","keep-alive");
+httpAPI.SetHeader("Context-Type","text/html");
 httpAPI.Request(httpRequest,httpResponse);
 
 //Get the content and headers returned from a web visit.
-printf("[+]%s,%s\n",httpResponse.body.c_str(),httpResponse.headers.c_str());
+std::cout << "[+]" << httpResponse.body << ", " << httpResponse.headers << '\n';
 //Retrieve a specific key value from the returned headers
-printf("[x]%s\n",httpAPI.GetHeader("Date").c_str());
+std::cout << "[+]" << httpAPI.GetHeader("Date") << '\n';
 ```
-##### Request a large file
+##### Download a file
 ```c++
-HttpRequestT httpRequest;
+HttpRequestT httpRequest = {"https://example.com/1GB.bin", "get", {HttpRequestT::SaveMethodT::FILE_STREAM, "C:\\test.bin"}};
 HttpResponseT httpResponse;
-httpRequest.url = "http://test.com/5Gb.bin";//example file url
-httpRequest.protocol = "get";
-httpRequest.SaveMethod = {HttpRequestT::SaveMethodT::FILE_STREAM, "C:\\5.bin"};
 
 WinhttpAPI httpAPI(httpRequest,httpResponse);
 httpAPI.request();
