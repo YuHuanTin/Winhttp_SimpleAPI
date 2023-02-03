@@ -1,8 +1,7 @@
 #ifndef WINHTTP_SIMPLEAPI_PARAMSPROCESS_H
 #define WINHTTP_SIMPLEAPI_PARAMSPROCESS_H
 
-#include "DataStruct/DataStruct.h"
-#include "winhttp.h"
+#include "../DataStruct/DataStruct.h"
 
 namespace ParamProcess {
     std::string GetUA(std::map<std::string, std::string> &Headers) {

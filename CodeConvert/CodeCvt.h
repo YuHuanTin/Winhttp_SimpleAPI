@@ -1,7 +1,7 @@
 #ifndef WINHTTP_SIMPLEAPI_CODECVT_H
 #define WINHTTP_SIMPLEAPI_CODECVT_H
 
-#include "DataStruct/DataStruct.h"
+#include "../DataStruct/DataStruct.h"
 
 namespace CodeCvt {
     std::string WstrToStr(const std::wstring &Src, UINT CodePage) {
@@ -91,6 +91,5 @@ namespace CodeCvt {
         return Dst;
     }
 }
-
 
 #endif //WINHTTP_SIMPLEAPI_CODECVT_H

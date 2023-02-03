@@ -15,4 +15,3 @@ set(LINK_FILES
 #add_library(Winhttp_SimpleAPI SHARED ${LINK_FILES})#SHARED (dll)
 add_library(Winhttp_SimpleAPI STATIC ${LINK_FILES})#STATIC (lib)
 
-#add_executable(exec main.cpp)

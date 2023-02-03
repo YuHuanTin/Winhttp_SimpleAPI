@@ -1,10 +1,7 @@
 #ifndef WINHTTP_SIMPLEAPI_APIINTERFACE_H
 #define WINHTTP_SIMPLEAPI_APIINTERFACE_H
 
-#include <string>
-#include "windows.h"
-#include "winhttp.h"
-#pragma comment(lib,"winhttp.lib")
+#include "../DataStruct/DataStruct.h"
 
 class WinHttpInterface{
 private:

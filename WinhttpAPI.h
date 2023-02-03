@@ -1,14 +1,14 @@
 #ifndef WINHTTP_SIMPLEAPI_WINHTTPAPI_H
 #define WINHTTP_SIMPLEAPI_WINHTTPAPI_H
 
-#include <utility>
-
-#include "DataStruct/DataStruct.h"
+#include <map>
+#include <string>
+#include <Windows.h>
 
 struct TimeoutT {
     int resolveTimeout = 3000;
     int connectTimeout = 3000;
-    int sendTimeout    = 3000;
+    int sendTimeout = 3000;
     int receiveTimeout = 3000;
 };
 struct WinhttpOptionT {
@@ -26,20 +26,21 @@ struct HttpRequestT {
         enum MethodE {
             STRING_STREAM, FILE_STREAM
         };
-        MethodE     downloadMethod;
+        MethodE downloadMethod;
         std::string downloadPath;
 
         SaveMethodT(MethodE DownloadMethod, std::string DownloadPath = {}) : downloadMethod(DownloadMethod), downloadPath(std::move(DownloadPath)) {}
     };
 
-    SaveMethodT    saveMethod;
-    TimeoutT       timeout;
+    SaveMethodT saveMethod;
+    TimeoutT timeout;
     WinhttpOptionT winhttpOption;
 
     HttpRequestT() : saveMethod(SaveMethodT::MethodE::STRING_STREAM) {}
 
-    HttpRequestT(std::string Url, std::string Method, SaveMethodT SaveMethod)
-            : url(std::move(Url)), protocol(std::move(Method)), saveMethod(std::move(SaveMethod)) {}
+    HttpRequestT(std::string Url, std::string Method, SaveMethodT SaveMethod = {SaveMethodT::STRING_STREAM})
+            : url(std::move(Url)), protocol(std::move(Method)), saveMethod(std::move(SaveMethod)) {
+    }
 };
 struct HttpResponseT {
     std::string Body;
@@ -49,8 +50,8 @@ struct HttpResponseT {
 class WinhttpAPI {
 private:
     std::map<std::string, std::string> headers;
-    HttpRequestT                       *pHttpRequest  = nullptr;
-    HttpResponseT                      *pHttpResponse = nullptr;
+    HttpRequestT *pHttpRequest = nullptr;
+    HttpResponseT *pHttpResponse = nullptr;
 public:
     WinhttpAPI() = default;
 

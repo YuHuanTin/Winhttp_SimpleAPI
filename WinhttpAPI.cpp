@@ -46,7 +46,8 @@ void WinhttpAPI::Request(HttpRequestT &HttpRequest, HttpResponseT &HttpResponse)
         //Crack
         wstring wszUrl = CodeCvt::StrToWstr(HttpRequest.url, CP_ACP);
         URL_COMPONENTS UrlComponents = ParamProcess::InitUrlComponents();
-        httpInterface.CrackUrl(wszUrl, wszUrl.length(), 0, UrlComponents);
+        if ((lastError = httpInterface.CrackUrl(wszUrl, wszUrl.length(), 0, UrlComponents)) != 0)
+            throw runtime_error("failed CrackUrl");
 
         //Connect
         wstring wszUrlHostName(&UrlComponents.lpszHostName[0], &UrlComponents.lpszHostName[UrlComponents.dwHostNameLength]);
@@ -100,11 +101,11 @@ void WinhttpAPI::Request(HttpRequestT &HttpRequest, HttpResponseT &HttpResponse)
             HttpResponse.Headers.append(cBuf.get(), strlen(cBuf.get()));
         }
 
-        //QueryDataAvailable & ReadData
+        // QueryDataAvailable & ReadData
         if ((lastError = httpInterface.QueryDataAvailable(dwBufLen)) == 0 && dwBufLen > 0) {
-            FILE *fp = nullptr;
+            std::FILE *fp = nullptr;
             std::function<void(char *, DWORD)> writeData;
-            if (HttpRequest.saveMethod.downloadMethod == HttpRequestT::SaveMethodT::FILE_STREAM) {
+            if (HttpRequest.saveMethod.downloadMethod == HttpRequestT::SaveMethodT::STRING_STREAM) {
                 writeData = [&HttpResponse](char *Buf, DWORD BufLen) {
                     HttpResponse.Body.append(Buf, BufLen);
                 };
