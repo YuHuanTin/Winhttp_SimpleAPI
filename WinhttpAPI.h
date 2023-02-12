@@ -4,6 +4,7 @@
 #include <map>
 #include <string>
 #include <Windows.h>
+#include <memory>
 
 struct TimeoutT {
     int resolveTimeout = 3000;
@@ -38,8 +39,9 @@ struct HttpRequestT {
 
     HttpRequestT() : saveMethod(SaveMethodT::MethodE::STRING_STREAM) {}
 
-    HttpRequestT(std::string Url, std::string Protocol, SaveMethodT SaveMethod = {SaveMethodT::STRING_STREAM})
-            : url(std::move(Url)), protocol(std::move(Protocol)), saveMethod(std::move(SaveMethod)) {
+    HttpRequestT(std::string Url, std::string Protocol, SaveMethodT SaveMethod = {SaveMethodT::STRING_STREAM}) : url(std::move(Url)),
+                                                                                                                 protocol(std::move(Protocol)),
+                                                                                                                 saveMethod(std::move(SaveMethod)) {
     }
 };
 struct HttpResponseT {
@@ -67,5 +69,15 @@ public:
 
     std::string GetHeader(const std::string &Key);
 };
+
+namespace CodeCvt {
+    extern std::string WstrToStr(const std::wstring &Src, UINT CodePage = CP_ACP);
+
+    extern std::wstring StrToWstr(const std::string &Src, UINT CodePage = CP_ACP);
+
+    extern std::unique_ptr<char[]> WstrToStr(wchar_t *Src, UINT CodePage = CP_ACP);
+
+    extern std::unique_ptr<wchar_t[]> StrToWstr(char *Src, UINT CodePage = CP_ACP);
+}
 
 #endif //WINHTTP_SIMPLEAPI_WINHTTPAPI_H
