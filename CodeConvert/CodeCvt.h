@@ -92,4 +92,5 @@ namespace CodeCvt {
     }
 }
 
+
 #endif //WINHTTP_SIMPLEAPI_CODECVT_H

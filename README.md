@@ -2,22 +2,28 @@
 
 ![image](https://learn.microsoft.com/en-us/windows/win32/winhttp/images/art-winhttp3.png)
 ## Import Methods:
-##### CMakeLists.txt:
-```c++
-include_directories(${PROJECT_SOURCE_DIR}/include)
-add_executable(${PROJECT_NAME} main.cpp)
-target_link_libraries(${PROJECT_NAME} ${PROJECT_SOURCE_DIR}/lib/Winhttp_SimpleAPI.lib)
-```
-##### main.cpp
-```c++
-#include <WinhttpAPI.h>
-```
-##### Or main.cpp:
-```c++
-#include "..\\WinhttpAPI.h"
-#pragma comment(lib,"..\\Winhttp_SimpleAPI.lib")
-```
+- ### cmake + source
+    ##### CMakeLists.txt
+    ```c++
+    include_directories(${PROJECT_SOURCE_DIR}/include)
+    add_executable(${PROJECT_NAME} main.cpp)
+    target_link_libraries(${PROJECT_NAME} ${PROJECT_SOURCE_DIR}/lib/Winhttp_SimpleAPI.lib)
+    ```
+    ##### main.cpp
+    ```c++
+    #include <WinhttpAPI.h>
+    ```
+- ### source only
+    ##### main.cpp
+    ```c++
+    #include "..\\WinhttpAPI.h"
+    #pragma comment(lib,"..\\Winhttp_SimpleAPI.lib")
+    ```
 ## Usage:
+##### First step, import namespace
+```c++
+using namespace Winhttp;
+```
 ##### Request a website information
 ```c++
 HttpRequestT httpRequest;
@@ -44,6 +50,15 @@ WinhttpAPI httpAPI(httpRequest,httpResponse);
 httpAPI.request();
 //At the same time,the headers exist and the body has empty
 ```
+##### Other
+- use encode/decode function
+    ```c++
+    // transform string to wstring
+    std::wstring wStr = CodeCvt::StrToWstr("hello world", CP_ACP);
+    
+    // transform wstring to string
+    std::string str = CodeCvt::WstrToStr(L"hello world", CP_ACP);
+    ```
 
 ## Thanks:
 [![Licenses for Open Source Development](https://img.shields.io/badge/JetBrains-Open%20Source%20License-white?logo=JetBrains&style=plastic)](https://www.jetbrains.com/community/opensource/#support)
