@@ -2,9 +2,9 @@
 
 ![image](https://learn.microsoft.com/en-us/windows/win32/winhttp/images/art-winhttp3.png)
 ## Import Methods:
-- ### cmake + source
-    ##### CMakeLists.txt
-    ```c++
+1. ### cmake + source
+   ##### CMakeLists.txt
+    ```cmake
     include_directories(${PROJECT_SOURCE_DIR}/include)
     add_executable(${PROJECT_NAME} main.cpp)
     target_link_libraries(${PROJECT_NAME} ${PROJECT_SOURCE_DIR}/lib/Winhttp_SimpleAPI.lib)
@@ -13,12 +13,35 @@
     ```c++
     #include <WinhttpAPI.h>
     ```
-- ### source only
-    ##### main.cpp
+2. ### source only
+   ##### main.cpp
     ```c++
     #include "..\\WinhttpAPI.h"
     #pragma comment(lib,"..\\Winhttp_SimpleAPI.lib")
     ```
+3. ### cmake install + source
+   enter this cmakelist.txt and use cmake install
+
+   if you want set install path, please set 'CMAKE_INSTALL_PREFIX'
+   #### your project cmakelist.txt
+   ```cmake
+    if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+        set(CMAKE_INSTALL_PREFIX "D:/debug")
+    elseif (${CMAKE_BUILD_TYPE} STREQUAL "Release")
+        set(CMAKE_INSTALL_PREFIX "D:/")
+    endif ()
+
+    include_directories(${CMAKE_INSTALL_PREFIX}/include)
+    add_executable(${PROJECT_NAME} main.cpp)
+    target_link_libraries(${PROJECT_NAME} ${CMAKE_INSTALL_PREFIX}/lib/Winhttp_SimpleAPI.lib)
+       
+   ```
+   ##### main.cpp
+   ```c++
+   #include <WinhttpAPI.h>
+   ```
+
+
 ## Usage:
 ##### First step, import namespace
 ```c++
