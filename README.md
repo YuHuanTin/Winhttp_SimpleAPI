@@ -25,23 +25,37 @@
    if you want set install path, please set 'CMAKE_INSTALL_PREFIX'
    #### your project cmakelist.txt
    ```cmake
-    if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
-        set(CMAKE_INSTALL_PREFIX "D:/debug")
-    elseif (${CMAKE_BUILD_TYPE} STREQUAL "Release")
-        set(CMAKE_INSTALL_PREFIX "D:/")
-    endif ()
+   foreach (INSTALL_PATH ${CMAKE_PREFIX_PATH})
+       string(TOLOWER ${INSTALL_PATH} INSTALL_PATH_TOLOWER)
+       string(TOLOWER ${CMAKE_BUILD_TYPE} BUILD_TYPE_TOLOWER)
+        
+       string(FIND ${INSTALL_PATH_TOLOWER} "debug" INSTALL_PATH_IS_DEBUG)
+       string(FIND ${BUILD_TYPE_TOLOWER} "debug" BUILD_TYPE_IS_DEBUG)
+        
+       if (NOT INSTALL_PATH_IS_DEBUG EQUAL -1 AND NOT BUILD_TYPE_IS_DEBUG EQUAL -1)
+            set(CMAKE_INSTALL_PREFIX ${INSTALL_PATH})
+            message("install_path is debug & build_type is debug\n${INSTALL_PATH_TOLOWER}\n${BUILD_TYPE_TOLOWER}")
+            message("set install_path up ${CMAKE_INSTALL_PREFIX}")
+       elseif (INSTALL_PATH_IS_DEBUG EQUAL -1 AND BUILD_TYPE_IS_DEBUG EQUAL -1)
+            set(CMAKE_INSTALL_PREFIX ${INSTALL_PATH})
+            message("install_path is release & build_type is release\n${INSTALL_PATH_TOLOWER}\n${BUILD_TYPE_TOLOWER}")
+            message("set install_path up ${CMAKE_INSTALL_PREFIX}")
+       endif ()
+   endforeach ()
+   
+   set(CMAKE_CXX_STANDARD 17)
+   
+   include_directories(${CMAKE_INSTALL_PREFIX}/include)
+   
+   add_executable(${PROJECT_NAME} main.cpp)
+   
+   target_link_libraries(${PROJECT_NAME} ${CMAKE_INSTALL_PREFIX}/lib/Winhttp_SimpleAPI.lib)
 
-    include_directories(${CMAKE_INSTALL_PREFIX}/include)
-    add_executable(${PROJECT_NAME} main.cpp)
-    target_link_libraries(${PROJECT_NAME} ${CMAKE_INSTALL_PREFIX}/lib/Winhttp_SimpleAPI.lib)
-       
    ```
    ##### main.cpp
    ```c++
    #include <WinhttpAPI.h>
    ```
-
-
 ## Usage:
 ##### First step, import namespace
 ```c++
