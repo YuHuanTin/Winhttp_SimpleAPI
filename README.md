@@ -5,7 +5,7 @@
 1. ### cmake + source
    ##### CMakeLists.txt
     ```cmake
-    include_directories(${PROJECT_SOURCE_DIR}/include)
+    include_directories(${PROJECT_SOURCE_DIR}/WinHttp)
     add_executable(${PROJECT_NAME} main.cpp)
     target_link_libraries(${PROJECT_NAME} ${PROJECT_SOURCE_DIR}/lib/Winhttp_SimpleAPI.lib)
     ```
@@ -13,49 +13,13 @@
     ```c++
     #include <WinhttpAPI.h>
     ```
-2. ### source only
+2. ### source only (msvc only)
    ##### main.cpp
     ```c++
     #include "..\\WinhttpAPI.h"
     #pragma comment(lib,"..\\Winhttp_SimpleAPI.lib")
     ```
-3. ### cmake install + source
-   enter this cmakelist.txt and use cmake install
 
-   if you want set install path, please set 'CMAKE_INSTALL_PREFIX'
-   #### your project cmakelist.txt
-   ```cmake
-   foreach (INSTALL_PATH ${CMAKE_PREFIX_PATH})
-       string(TOLOWER ${INSTALL_PATH} INSTALL_PATH_TOLOWER)
-       string(TOLOWER ${CMAKE_BUILD_TYPE} BUILD_TYPE_TOLOWER)
-        
-       string(FIND ${INSTALL_PATH_TOLOWER} "debug" INSTALL_PATH_IS_DEBUG)
-       string(FIND ${BUILD_TYPE_TOLOWER} "debug" BUILD_TYPE_IS_DEBUG)
-        
-       if (NOT INSTALL_PATH_IS_DEBUG EQUAL -1 AND NOT BUILD_TYPE_IS_DEBUG EQUAL -1)
-            set(CMAKE_INSTALL_PREFIX ${INSTALL_PATH})
-            message("install_path is debug & build_type is debug\n${INSTALL_PATH_TOLOWER}\n${BUILD_TYPE_TOLOWER}")
-            message("set install_path up ${CMAKE_INSTALL_PREFIX}")
-       elseif (INSTALL_PATH_IS_DEBUG EQUAL -1 AND BUILD_TYPE_IS_DEBUG EQUAL -1)
-            set(CMAKE_INSTALL_PREFIX ${INSTALL_PATH})
-            message("install_path is release & build_type is release\n${INSTALL_PATH_TOLOWER}\n${BUILD_TYPE_TOLOWER}")
-            message("set install_path up ${CMAKE_INSTALL_PREFIX}")
-       endif ()
-   endforeach ()
-   
-   set(CMAKE_CXX_STANDARD 17)
-   
-   include_directories(${CMAKE_INSTALL_PREFIX}/include)
-   
-   add_executable(${PROJECT_NAME} main.cpp)
-   
-   target_link_libraries(${PROJECT_NAME} ${CMAKE_INSTALL_PREFIX}/lib/Winhttp_SimpleAPI.lib)
-
-   ```
-   ##### main.cpp
-   ```c++
-   #include <WinhttpAPI.h>
-   ```
 ## Usage:
 ##### First step, import namespace
 ```c++
@@ -96,6 +60,10 @@ httpAPI.request();
     // transform wstring to string
     std::string str = CodeCvt::WstrToStr(L"hello world", CP_ACP);
     ```
+  
+##### Todo
+   - [ ] Change code style, design mode
+   - [ ] multithreading support
 
 ## Thanks:
 [![Licenses for Open Source Development](https://img.shields.io/badge/JetBrains-Open%20Source%20License-white?logo=JetBrains&style=plastic)](https://www.jetbrains.com/community/opensource/#support)
