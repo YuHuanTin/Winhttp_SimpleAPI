@@ -1,5 +1,9 @@
 # A simple secondary wrapper for WinHttp
 
+
+This project may not be updated frequently because a better alternative project has been found: https://github.com/libcpr/cpr
+
+
 ![image](https://learn.microsoft.com/en-us/windows/win32/winhttp/images/art-winhttp3.png)
 ## Import Methods:
 1. ### cmake + source
